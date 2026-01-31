@@ -1,0 +1,6 @@
+:8080 {
+    route /api/users/* {
+       uri strip_prefix /api/users
+       reverse_proxy user-service:8080
+   }
+}

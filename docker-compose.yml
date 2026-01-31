@@ -1,0 +1,59 @@
+include:
+  - services/user-service/docker-compose.yml
+  - services/notification-service/docker-compose.yml
+  - services/order-service/docker-compose.yml
+  - services/payment-service/docker-compose.yml
+  - services/product-catalog-service/docker-compose.yml
+  - services/shopping-service/docker-compose.yml
+
+services:
+
+  caddy:
+    image: caddy:latest
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    depends_on:
+      # Exposed API's
+      - user-service
+
+  # Services..
+  user-service:
+    build:
+      context: .
+      dockerfile: ./services/user-service/Dockerfile
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: ./services/notification-service/Dockerfile
+
+  order-service:
+    build:
+      context: .
+      dockerfile: ./services/order-service/Dockerfile
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: ./services/payment-service/Dockerfile
+
+  product-catalog-service:
+    build:
+      context: .
+      dockerfile: ./services/product-catalog-service/Dockerfile
+
+  shopping-service:
+    build:
+      context: .
+      dockerfile: ./services/shopping-service/Dockerfile
+
+  postgres: # For now, a single DB
+    image: postgres:15
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
