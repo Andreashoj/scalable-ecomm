@@ -5,7 +5,7 @@ WORKDIR /app
 COPY . .
 
 RUN go mod download
-RUN go build -o notification-service ./services/notification-service/main.go
+RUN go build -o notification-service ./services/notification/main.go
 
 EXPOSE 8080
 

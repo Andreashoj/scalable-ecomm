@@ -5,7 +5,7 @@ WORKDIR /app
 COPY . .
 
 RUN go mod download
-RUN go build -o shopping-service ./services/shopping-service/main.go
+RUN go build -o shopping-service ./services/shopping/main.go
 
 EXPOSE 8080
 

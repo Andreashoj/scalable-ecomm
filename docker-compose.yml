@@ -1,13 +1,12 @@
 include:
-  - services/user-service/docker-compose.yml
-  - services/notification-service/docker-compose.yml
-  - services/order-service/docker-compose.yml
-  - services/payment-service/docker-compose.yml
-  - services/product-catalog-service/docker-compose.yml
-  - services/shopping-service/docker-compose.yml
+  - services/user/docker-compose.yml
+  - services/notification/docker-compose.yml
+  - services/order/docker-compose.yml
+  - services/payment/docker-compose.yml
+  - services/product/docker-compose.yml
+  - services/shopping/docker-compose.yml
 
 services:
-
   caddy:
     image: caddy:latest
     container_name: api-gateway
@@ -23,32 +22,32 @@ services:
   user-service:
     build:
       context: .
-      dockerfile: ./services/user-service/Dockerfile
+      dockerfile: services/user/Dockerfile
 
   notification-service:
     build:
       context: .
-      dockerfile: ./services/notification-service/Dockerfile
+      dockerfile: services/notification/Dockerfile
 
   order-service:
     build:
       context: .
-      dockerfile: ./services/order-service/Dockerfile
+      dockerfile: services/order/Dockerfile
 
   payment-service:
     build:
       context: .
-      dockerfile: ./services/payment-service/Dockerfile
+      dockerfile: services/payment/Dockerfile
 
   product-catalog-service:
     build:
       context: .
-      dockerfile: ./services/product-catalog-service/Dockerfile
+      dockerfile: services/product/Dockerfile
 
   shopping-service:
     build:
       context: .
-      dockerfile: ./services/shopping-service/Dockerfile
+      dockerfile: services/shopping/Dockerfile
 
   postgres: # For now, a single DB
     image: postgres:15

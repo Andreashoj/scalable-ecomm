@@ -1,4 +1,8 @@
 github.com/go-chi/chi v1.5.5 h1:vOB/HbEMt9QqBqErz07QehcOKHaWFtuj87tTDVz2qXE=
 github.com/go-chi/chi v1.5.5/go.mod h1:C9JqLr3tIYjDOZpzn+BCuxY8z8vmca43EeMgyZt7irw=
+github.com/golang-migrate/migrate v3.5.4+incompatible h1:R7OzwvCJTCgwapPCiX6DyBiu2czIUMDCB118gFTKTUA=
+github.com/golang-migrate/migrate v3.5.4+incompatible/go.mod h1:IsVUlFN5puWOmXrqjgGUfIRIbU7mr8oNBE2tyERd9Wk=
+github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
+github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/lib/pq v1.11.1 h1:wuChtj2hfsGmmx3nf1m7xC2XpK6OtelS2shMY+bGMtI=
 github.com/lib/pq v1.11.1/go.mod h1:/p+8NSbOcwzAEI7wiMXFlgydTwcgTr3OSKMsD2BitpA=
