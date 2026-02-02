@@ -10,12 +10,11 @@ import (
 
 type AccessToken interface{}
 
-// Access Token: token (hash), created_at, expires_at, fk => refresh_token
 type accessToken struct {
-	ID             string
-	createdAt      time.Time
-	expiresAt      time.Time
-	refreshTokenID string
+	ID             string    `json:"id,omitempty"`
+	createdAt      time.Time `json:"created_at"`
+	expiresAt      time.Time `json:"expires_at"`
+	refreshTokenID string    `json:"refresh_token_id,omitempty"`
 }
 
 func NewAccessToken(refreshTokenID string) (AccessToken, string) {

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"andreasho/scalable-ecomm/pgk"
+	"andreasho/scalable-ecomm/services/user/internal/handlers"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -11,21 +13,19 @@ func main() {
 
 	// Keep is simple for now:
 	// Schemas:
-	// User: id, name, email, role, refresh_token (hash), refresh_created_at
-	// Access Token: token (hash), created_at, expires_at, fk => refresh_token
-	// Endpoints:
-	// Register
-	// Login
-	// Logout
+	// User: id, name, email, role, refresh_token (hash), refresh_created_at [X]
+	// Access Token: token (hash), created_at, expires_at, fk => refresh_token [X]
+	// Models => Create migrations ? [X]
+	// Endpoints: [X]
+	// Register [X]
+	// Login [X]
+	// Logout [X]
 	// Authentication
 
 	// Flow => Register => Login => Create Requests (Authentication guard) => Logout
-
+	logger := pgk.NewLogger()
 	r := chi.NewRouter()
-
-	r.Get("/tester", func(writer http.ResponseWriter, request *http.Request) {
-		writer.Write([]byte("hello"))
-	})
+	handlers.StartRouteHandler(r, logger)
 
 	http.ListenAndServe(":8080", r)
 }
