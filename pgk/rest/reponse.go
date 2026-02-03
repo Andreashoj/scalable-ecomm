@@ -15,7 +15,7 @@ func Response(w http.ResponseWriter, payload interface{}, statusCode int) error 
 	}
 
 	w.WriteHeader(statusCode)
-	w.Write([]byte(json))
+	w.Write(json)
 	return nil
 }
 

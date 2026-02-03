@@ -1,7 +1,9 @@
 package main
 
 import (
+	"andreasho/scalable-ecomm/db/repos"
 	"andreasho/scalable-ecomm/pgk"
+	"andreasho/scalable-ecomm/services/user/internal/auth"
 	"andreasho/scalable-ecomm/services/user/internal/handlers"
 	"net/http"
 
@@ -15,17 +17,25 @@ func main() {
 	// Schemas:
 	// User: id, name, email, role, refresh_token (hash), refresh_created_at [X]
 	// Access Token: token (hash), created_at, expires_at, fk => refresh_token [X]
-	// Models => Create migrations ? [X]
-	// Endpoints: [X]
+	// Models => Save migrations ? [X]
+	// Endpoints: []
 	// Register [X]
-	// Login [X]
-	// Logout [X]
+	// Login []
+	// Logout []
 	// Authentication
 
-	// Flow => Register => Login => Create Requests (Authentication guard) => Logout
-	logger := pgk.NewLogger()
+	// Flow => Register => Login => Save Requests (Authentication guard) => Logout
 	r := chi.NewRouter()
-	handlers.StartRouteHandler(r, logger)
+	logger := pgk.NewLogger()
+
+	// repos
+	userRepo := repos.NewUserRepo()
+	accessTokenRepo := repos.NewAccessTokenRepo()
+
+	// services
+	authService := auth.NewAuthService(logger, userRepo, accessTokenRepo)
+
+	handlers.StartRouteHandler(r, logger, authService)
 
 	http.ListenAndServe(":8080", r)
 }
