@@ -15,9 +15,19 @@ type AccessToken struct {
 	refreshTokenID string    `json:"refresh_token_id,omitempty"`
 }
 
-func NewAccessToken() (*AccessToken, string) {
-	ID := uuid.New().String()
-	hash := sha256.Sum256([]byte(ID))
+func NewAccessToken(userID uuid.UUID) (*AccessToken, string) {
+	//ID := uuid.New().String()
+	//hash := sha256.Sum256([]byte(ID))
+
+	// Create Access token
+	// Flow
+	// User logs in
+	// Create refreshToken + accessToken
+	// Store refreshToken in DB - is it though?
+	// Access token invalidates itself through expiration
+	// Refresh token is created and send to the user..
+	// Why is this stateful.. it has expiration jsut like the accessToken ?
+	// Stateful so the server can revoke the refreshToken and invalidate it on logout ex.
 
 	return &AccessToken{
 		ID:             hex.EncodeToString(hash[:]),

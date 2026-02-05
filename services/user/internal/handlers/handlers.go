@@ -27,10 +27,10 @@ func StartRouteHandler(r *chi.Mux, logger pgk.Logger, authService auth.AuthServi
 	routerHandler.registerRoutes(r)
 }
 
-func (r *routeHandler) registerRoutes(router *chi.Mux) error {
+func (h *routeHandler) registerRoutes(router *chi.Mux) error {
 	router.Route("/auth", func(a chi.Router) {
-		a.Post("/register", r.registerUser)
-		a.Post("/login", r.login)
+		a.Post("/register", h.registerUser)
+		a.Post("/login", h.login)
 		a.Post("/logout", logout)
 		a.Get("/me", me)
 	})
@@ -47,14 +47,14 @@ func (h *routeHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessTokenID, err := h.authService.RegisterUser(payload)
+	err = h.authService.RegisterUser(payload)
 	if err != nil {
 		h.logger.Error("failed creating user with error: %s", err)
 		rest.ErrorResponse(w, 500, errors.BadRequest)
 		return
 	}
 
-	rest.Response(w, accessTokenID, 200)
+	rest.Response(w, "success", 200)
 }
 
 func me(w http.ResponseWriter, r *http.Request) {

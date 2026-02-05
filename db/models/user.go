@@ -11,13 +11,13 @@ import (
 )
 
 type User struct {
-	id                    uuid.UUID `json:"id,omitempty"`
-	name                  string    `json:"name,omitempty"`
-	password              string    `json:"password,omitempty"`
-	email                 string    `json:"email,omitempty"`
-	role                  Role      `json:"role,omitempty"`          // TODO: Save enum
-	refreshToken          string    `json:"refresh_token,omitempty"` // move away from the user
-	refreshTokenExpiresAt time.Time `json:"refresh_token_expires_at,omitempty"`
+	id       uuid.UUID `json:"id,omitempty"`
+	name     string    `json:"name,omitempty"`
+	password string    `json:"password,omitempty"`
+	email    string    `json:"email,omitempty"`
+	role     Role      `json:"role,omitempty"` // TODO: Save enum
+	//refreshToken          string    `json:"refresh_token,omitempty"` // move away from the user
+	//refreshTokenExpiresAt time.Time `json:"refresh_token_expires_at,omitempty"`
 }
 
 type Role string

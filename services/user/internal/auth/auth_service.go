@@ -6,54 +6,81 @@ import (
 	"andreasho/scalable-ecomm/pgk"
 	"andreasho/scalable-ecomm/services/user/internal/dto"
 	"fmt"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 type AuthService interface {
-	RegisterUser(payload dto.RegisterUserDTO) (string, error)
-	Login(payload dto.LoginRequestDTO) (*models.User, string, error)
+	RegisterUser(payload dto.RegisterUserDTO) error
+	Login(payload dto.LoginRequestDTO) (string, string, error)
 }
 
 type authService struct {
-	userRepo        repos.UserRepo
-	accessTokenRepo repos.AccessTokenRepo
+	userRepo         repos.UserRepo
+	accessTokenRepo  repos.AccessTokenRepo
 	refreshTokenRepo repos.RefreshTokenRepo
-	logger          pgk.Logger
+	logger           pgk.Logger
 }
 
-func (a *authService) RegisterUser(payload dto.RegisterUserDTO) (string, error) {
+func (a *authService) RegisterUser(payload dto.RegisterUserDTO) error {
 	user, err := models.NewUser(payload.Name, payload.Email, payload.Password)
 	if err != nil {
-		return "", fmt.Errorf("failed creating user: %s", err)
+		return fmt.Errorf("failed creating user: %s", err)
 	}
-
-	_ := user.CreateRefreshToken()
 	a.userRepo.Save(user)
 
-	accessToken, accessTokenID := models.NewAccessToken()
-	a.accessTokenRepo.Save(accessToken)
-
 	a.logger.Info("Created user with ID: %v", user.GetID())
-	return accessTokenID, nil
+	return nil
 }
 
-func (a *authService) Login(payload dto.LoginRequestDTO) (*models.User, string, error) {
-	// Find user based off email
+func (a *authService) Login(payload dto.LoginRequestDTO) (string, string, error) {
 	user, err := a.userRepo.Find(payload.Email)
 	if err != nil {
-		return nil, "", fmt.Errorf("couldn't find user with email: %s", payload.Email)
+		return "", "", fmt.Errorf("couldn't find user with email: %s", payload.Email)
 	}
 
 	validLogin := user.ComparePassword(payload.Password)
 	if validLogin {
-		// Save accesstoken/refresh token
 		refreshToken := models.NewRefreshToken(user.GetID())
 		a.refreshTokenRepo.Save(refreshToken)
+		refreshTokenWithClaims, err := refreshToken.ToString()
+		if err != nil {
+			return "", "", fmt.Errorf("failed creating claims for refresh token: %s", err)
+		}
 
-		accessToken := models.NewAccessToken(re)
-		return user,
+		accessTokenWithClaims, err := createAccessToken(user.GetID())
+		if err != nil {
+			return "", "", fmt.Errorf("failed creating access token: %s", err)
+		}
+
+		return refreshTokenWithClaims, accessTokenWithClaims, nil
 	}
 
-	return nil, "", nil
+	return "", "", nil
+}
+
+func createAccessToken(userID uuid.UUID) (string, error) {
+	expirationTime := time.Now().Add(time.Minute * 15)
+	claims := struct {
+		userID string
+		jwt.RegisteredClaims
+	}{
+		userID: userID.String(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	tokenString, err := token.SignedString([]byte("secret")) // TODO: Update with actual secret
+	if err != nil {
+		return "", fmt.Errorf("failed signing access token: %s", err)
+	}
+
+	return tokenString, nil
 }
 
 func NewAuthService(logger pgk.Logger, userRepo repos.UserRepo, accessTokenRepo repos.AccessTokenRepo) AuthService {
