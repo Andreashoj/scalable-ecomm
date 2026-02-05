@@ -1,10 +1,12 @@
 package main
 
 import (
-	"andreasho/scalable-ecomm/db/repos"
 	"andreasho/scalable-ecomm/pgk"
+	"andreasho/scalable-ecomm/services/user/handlers"
 	"andreasho/scalable-ecomm/services/user/internal/auth"
-	"andreasho/scalable-ecomm/services/user/internal/handlers"
+	"andreasho/scalable-ecomm/services/user/internal/db"
+	"andreasho/scalable-ecomm/services/user/internal/db/repos"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -24,18 +26,25 @@ func main() {
 	// Logout []
 	// Authentication
 
-	// Flow => Register => Login => Save Requests (Authentication guard) => Logout
+	DB, err := db.StartDB()
+	defer DB.Close()
+	if err != nil {
+		fmt.Printf("failed creating connection to DB: %s", err)
+		return
+	}
+
 	r := chi.NewRouter()
 	logger := pgk.NewLogger()
 
 	// repos
-	userRepo := repos.NewUserRepo()
-	accessTokenRepo := repos.NewAccessTokenRepo()
+	userRepo := repos.NewUserRepo(DB)
+	refreshTokenRepo := repos.NewRefreshTokenRepo(DB)
 
 	// services
-	authService := auth.NewAuthService(logger, userRepo, accessTokenRepo)
+	authService := auth.NewAuthService(logger, userRepo, refreshTokenRepo)
 
 	handlers.StartRouteHandler(r, logger, authService)
-
-	http.ListenAndServe(":8080", r)
+	if err := http.ListenAndServe(":8080", r); err != nil {
+		fmt.Printf("failed while starting http router: %s", err)
+	}
 }

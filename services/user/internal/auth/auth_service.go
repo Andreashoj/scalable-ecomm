@@ -1,9 +1,9 @@
 package auth
 
 import (
-	"andreasho/scalable-ecomm/db/models"
-	"andreasho/scalable-ecomm/db/repos"
 	"andreasho/scalable-ecomm/pgk"
+	"andreasho/scalable-ecomm/services/user/internal/db/models"
+	"andreasho/scalable-ecomm/services/user/internal/db/repos"
 	"andreasho/scalable-ecomm/services/user/internal/dto"
 	"fmt"
 	"time"
@@ -19,7 +19,6 @@ type AuthService interface {
 
 type authService struct {
 	userRepo         repos.UserRepo
-	accessTokenRepo  repos.AccessTokenRepo
 	refreshTokenRepo repos.RefreshTokenRepo
 	logger           pgk.Logger
 }
@@ -29,9 +28,12 @@ func (a *authService) RegisterUser(payload dto.RegisterUserDTO) error {
 	if err != nil {
 		return fmt.Errorf("failed creating user: %s", err)
 	}
-	a.userRepo.Save(user)
+	err = a.userRepo.Save(user)
+	if err != nil {
+		return fmt.Errorf("failed saving user: %s", err)
+	}
 
-	a.logger.Info("Created user with ID: %v", user.GetID())
+	a.logger.Info("Created user with ID: %s", user.GetID())
 	return nil
 }
 
@@ -83,10 +85,10 @@ func createAccessToken(userID uuid.UUID) (string, error) {
 	return tokenString, nil
 }
 
-func NewAuthService(logger pgk.Logger, userRepo repos.UserRepo, accessTokenRepo repos.AccessTokenRepo) AuthService {
+func NewAuthService(logger pgk.Logger, userRepo repos.UserRepo, token repos.RefreshTokenRepo) AuthService {
 	return &authService{
-		logger:          logger,
-		userRepo:        userRepo,
-		accessTokenRepo: accessTokenRepo,
+		logger:           logger,
+		refreshTokenRepo: token,
+		userRepo:         userRepo,
 	}
 }

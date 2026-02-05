@@ -7,6 +7,7 @@ import (
 	"andreasho/scalable-ecomm/services/user/internal/auth"
 	"andreasho/scalable-ecomm/services/user/internal/dto"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -24,7 +25,11 @@ func StartRouteHandler(r *chi.Mux, logger pgk.Logger, authService auth.AuthServi
 		authService: authService,
 	}
 
-	routerHandler.registerRoutes(r)
+	err := routerHandler.registerRoutes(r)
+	if err != nil {
+		fmt.Sprintf("route handler failed with error: %s", err)
+		return
+	}
 }
 
 func (h *routeHandler) registerRoutes(router *chi.Mux) error {
