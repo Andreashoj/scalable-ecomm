@@ -36,8 +36,12 @@ func (h *routeHandler) registerRoutes(router *chi.Mux) error {
 	router.Route("/auth", func(a chi.Router) {
 		a.Post("/register", h.registerUser)
 		a.Post("/login", h.login)
-		a.Post("/logout", logout)
-		a.Get("/me", me)
+
+		a.Group(func(g chi.Router) {
+			g.Use(auth.AuthMiddleware)
+			g.Post("/logout", logout)
+			g.Get("/me", h.me)
+		})
 	})
 
 	return nil
@@ -62,13 +66,17 @@ func (h *routeHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	rest.Response(w, "success", 200)
 }
 
-func me(w http.ResponseWriter, r *http.Request) {
-	// Use access_token to retrieve user
-	// Used for validating a user is logged in
+func (h *routeHandler) me(w http.ResponseWriter, r *http.Request) {
+	claims := r.Context().Value("claims").(*auth.AccessToken)
+	userID := claims.UserID
+	user, err := h.authService.GetUser(userID)
 
-	// Returns:
-	// Valid access_token => 200
-	// Invalid access_token / none => 401
+	if err != nil {
+		rest.ErrorResponse(w, 500, errors.NotFound)
+		return
+	}
+
+	rest.Response(w, user, 200)
 }
 
 func (h *routeHandler) login(w http.ResponseWriter, r *http.Request) {
@@ -97,6 +105,7 @@ func (h *routeHandler) login(w http.ResponseWriter, r *http.Request) {
 
 func logout(w http.ResponseWriter, r *http.Request) {
 	// Accepts access_token
+	// Invalidate refresh token
 
 	// Invalid access_token => 401
 	// Delete refresh_token => 201

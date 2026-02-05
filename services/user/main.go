@@ -22,7 +22,7 @@ func main() {
 	// Models => Save migrations ? [X]
 	// Endpoints: []
 	// Register [X]
-	// Login []
+	// Login [X]
 	// Logout []
 	// Authentication
 

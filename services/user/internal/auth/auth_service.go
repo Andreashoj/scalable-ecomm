@@ -6,21 +6,33 @@ import (
 	"andreasho/scalable-ecomm/services/user/internal/db/repos"
 	"andreasho/scalable-ecomm/services/user/internal/dto"
 	"fmt"
-	"time"
-
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 )
 
 type AuthService interface {
 	RegisterUser(payload dto.RegisterUserDTO) error
 	Login(payload dto.LoginRequestDTO) (string, string, error)
+	Logout(payload dto.LoginRequestDTO) (string, string, error)
+	GetUser(userID string) (*models.User, error)
 }
 
 type authService struct {
 	userRepo         repos.UserRepo
 	refreshTokenRepo repos.RefreshTokenRepo
 	logger           pgk.Logger
+}
+
+func (a *authService) GetUser(userID string) (*models.User, error) {
+	user, err := a.userRepo.FindByID(userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed finding user with error: %s", err)
+	}
+
+	return user, nil
+}
+
+func (a *authService) Logout(payload dto.LoginRequestDTO) (string, string, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (a *authService) RegisterUser(payload dto.RegisterUserDTO) error {
@@ -38,7 +50,7 @@ func (a *authService) RegisterUser(payload dto.RegisterUserDTO) error {
 }
 
 func (a *authService) Login(payload dto.LoginRequestDTO) (string, string, error) {
-	user, err := a.userRepo.Find(payload.Email)
+	user, err := a.userRepo.FindByEmail(payload.Email)
 	if err != nil {
 		return "", "", fmt.Errorf("couldn't find user with email: %s", payload.Email)
 	}
@@ -61,28 +73,6 @@ func (a *authService) Login(payload dto.LoginRequestDTO) (string, string, error)
 	}
 
 	return "", "", nil
-}
-
-func createAccessToken(userID uuid.UUID) (string, error) {
-	expirationTime := time.Now().Add(time.Minute * 15)
-	claims := struct {
-		userID string
-		jwt.RegisteredClaims
-	}{
-		userID: userID.String(),
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expirationTime),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
-	tokenString, err := token.SignedString([]byte("secret")) // TODO: Update with actual secret
-	if err != nil {
-		return "", fmt.Errorf("failed signing access token: %s", err)
-	}
-
-	return tokenString, nil
 }
 
 func NewAuthService(logger pgk.Logger, userRepo repos.UserRepo, token repos.RefreshTokenRepo) AuthService {
