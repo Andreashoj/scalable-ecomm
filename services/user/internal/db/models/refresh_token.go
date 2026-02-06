@@ -36,7 +36,7 @@ func (r *RefreshToken) ToString() (string, error) {
 		},
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString([]byte("secret"))
 	if err != nil {
 		return "", fmt.Errorf("failed signing access token: %s", err)

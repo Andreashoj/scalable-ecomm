@@ -5,18 +5,19 @@ import (
 	"andreasho/scalable-ecomm/pgk/rest"
 	"context"
 	"net/http"
+	"strings"
 )
 
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		// Extract cookie and retrieve userID
-		cookie, err := request.Cookie("access_token")
-		if err != nil {
+		authorizationHeader := request.Header.Get("Authorization")
+		if authorizationHeader == "" {
 			rest.ErrorResponse(writer, 401, errors.Unauthorized)
 			return
 		}
 
-		accessToken, err := parseAccessToken(cookie.Value)
+		token := strings.TrimPrefix(authorizationHeader, "Bearer ")
+		accessToken, err := parseAccessToken(token)
 		if err != nil {
 			rest.ErrorResponse(writer, 401, errors.Unauthorized)
 			return

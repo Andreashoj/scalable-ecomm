@@ -36,6 +36,7 @@ func (h *routeHandler) registerRoutes(router *chi.Mux) error {
 	router.Route("/auth", func(a chi.Router) {
 		a.Post("/register", h.registerUser)
 		a.Post("/login", h.login)
+		// Refresh endpoint
 
 		a.Group(func(g chi.Router) {
 			g.Use(auth.AuthMiddleware)
@@ -80,24 +81,24 @@ func (h *routeHandler) me(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *routeHandler) login(w http.ResponseWriter, r *http.Request) {
-	// Accepts email and password
 	var payload dto.LoginRequestDTO
-	err := json.NewDecoder(r.Body).Decode(payload)
+	err := json.NewDecoder(r.Body).Decode(&payload)
 	if err != nil {
 		h.logger.Error("failed decoding login payload with error: %s", err)
 		rest.ErrorResponse(w, 500, errors.BadRequest)
 		return
 	}
 
-	user, accessTokenID, err := h.authService.Login(payload)
+	refreshToken, accessToken, err := h.authService.Login(payload)
 	if err != nil {
+		h.logger.Info("Unauthorized attempt to login", "error", err)
 		rest.ErrorResponse(w, 401, errors.BadRequest)
 		return
 	}
 
 	response := map[string]interface{}{
-		"user":          user,
-		"accessTokenID": accessTokenID,
+		"refreshToken": refreshToken,
+		"accessToken":  accessToken,
 	}
 
 	rest.Response(w, response, 200)

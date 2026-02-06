@@ -9,7 +9,8 @@ import (
 )
 
 func StartDB() (*sql.DB, error) {
-	dsn := "user=admin password=secret host=postgres port=5432 dbname=user_service sslmode=disable"
+	//dsn := "user=admin password=secret host=postgres port=5432 dbname=user_service sslmode=disable"
+	dsn := "user=admin password=secret host=localhost port=5432 dbname=user_service sslmode=disable"
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed creating connection to DB: %s", err)

@@ -24,7 +24,8 @@ func main() {
 	// Register [X]
 	// Login [X]
 	// Logout []
-	// Authentication
+	// Authentication []
+	// Check if access token works []
 
 	DB, err := db.StartDB()
 	defer DB.Close()
@@ -43,7 +44,9 @@ func main() {
 	// services
 	authService := auth.NewAuthService(logger, userRepo, refreshTokenRepo)
 
+	// handlers
 	handlers.StartRouteHandler(r, logger, authService)
+
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		fmt.Printf("failed while starting http router: %s", err)
 	}
