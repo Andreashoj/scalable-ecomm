@@ -52,15 +52,15 @@ func (h *routeHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	var payload dto.RegisterUserDTO
 	err := json.NewDecoder(r.Body).Decode(&payload)
 	if err != nil {
-		h.logger.Error("failed decoding payload with error: %s", err)
+		h.logger.Error("failed decoding payload with error", "error", err)
 		rest.ErrorResponse(w, 500, errors.BadRequest)
 		return
 	}
 
 	err = h.authService.RegisterUser(payload)
 	if err != nil {
-		h.logger.Error("failed creating user with error: %s", err)
-		rest.ErrorResponse(w, 500, errors.BadRequest)
+		h.logger.Error("failed creating user with error", "error", err)
+		rest.ErrorResponse(w, 500, errors.ErrorMessage(err.Error()))
 		return
 	}
 
@@ -84,7 +84,7 @@ func (h *routeHandler) login(w http.ResponseWriter, r *http.Request) {
 	var payload dto.LoginRequestDTO
 	err := json.NewDecoder(r.Body).Decode(&payload)
 	if err != nil {
-		h.logger.Error("failed decoding login payload with error: %s", err)
+		h.logger.Error("Failed decoding login payload", "error", err)
 		rest.ErrorResponse(w, 500, errors.BadRequest)
 		return
 	}

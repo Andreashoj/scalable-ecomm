@@ -10,7 +10,7 @@ import (
 )
 
 type AccessToken struct {
-	UserID string `json:"user_id"`
+	UserID string `json:"user_id,omitempty"`
 }
 
 func createAccessToken(userID uuid.UUID) (string, error) {

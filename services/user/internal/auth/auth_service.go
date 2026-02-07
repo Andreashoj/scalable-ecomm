@@ -40,6 +40,7 @@ func (a *authService) RegisterUser(payload dto.RegisterUserDTO) error {
 	if err != nil {
 		return fmt.Errorf("failed creating user: %s", err)
 	}
+
 	err = a.userRepo.Save(user)
 	if err != nil {
 		return fmt.Errorf("failed saving user: %s", err)

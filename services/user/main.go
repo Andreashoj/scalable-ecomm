@@ -15,17 +15,15 @@ import (
 func main() {
 	// User service MVP
 
-	// Keep is simple for now:
-	// Schemas:
-	// User: id, name, email, role, refresh_token (hash), refresh_created_at [X]
-	// Access Token: token (hash), created_at, expires_at, fk => refresh_token [X]
-	// Models => Save migrations ? [X]
-	// Endpoints: []
-	// Register [X]
-	// Login [X]
+	// Register
+	// => Validation checks [X]
+	// => Duplicate email [X]
+	// => Valid password [X]
+	// => Valid email [X]
+	// Authentication [X]
+	// Check if access token works [X]
 	// Logout []
-	// Authentication []
-	// Check if access token works []
+	// Refresh []
 
 	DB, err := db.StartDB()
 	defer DB.Close()

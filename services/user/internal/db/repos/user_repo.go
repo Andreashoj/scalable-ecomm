@@ -3,7 +3,9 @@ package repos
 import (
 	"andreasho/scalable-ecomm/services/user/internal/db/models"
 	"database/sql"
+	"errors"
 	"fmt"
+	"strings"
 )
 
 type UserRepo interface {
@@ -40,7 +42,12 @@ func (u *userRepo) Save(user *models.User) error {
 	_, err := u.db.Exec(
 		`INSERT INTO users (id, name, email, password, role, created_at) VALUES ($1, $2, $3, $4, $5, $6)`,
 		user.ID, user.Name, user.Email, user.Password, user.Role, user.CreatedAt)
+
 	if err != nil {
+		if strings.Contains(err.Error(), "duplicate key") {
+			return errors.New("email already exists")
+		}
+
 		return fmt.Errorf("failed creating user in DB: %s", err)
 	}
 

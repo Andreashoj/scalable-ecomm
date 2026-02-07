@@ -4,44 +4,63 @@ import (
 	"fmt"
 	"time"
 
+	_ "github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
-	ID        uuid.UUID `json:"id,omitempty"`
-	Name      string    `json:"name,omitempty"`
-	Password  string    `json:"password,omitempty"`
-	Email     string    `json:"email,omitempty"`
-	Role      Role      `json:"role,omitempty"` // TODO: Save enum
-	CreatedAt time.Time `json:"role,omitempty"` // TODO: Save enum
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name" validate:"required,min=1"`
+	Password  string    `json:"password" validate:"required,min=8"`
+	Email     string    `json:"email" validate:"required,email"`
+	Role      Role      `json:"role"`
+	CreatedAt time.Time `json:"role"`
 }
 
 type Role string
 
 const (
 	Customer Role = "customer"
+	Tenant   Role = "tenant"
+	Admin    Role = "admin"
 )
 
 func NewUser(name, email, password string) (*User, error) {
-	hashedPass, err := createHashedPassword(password)
-	if err != nil {
-		return nil, fmt.Errorf("failed creating hashed pass: %s", err)
-	}
-
 	user := &User{
 		ID:       uuid.New(),
 		Name:     name,
 		Email:    email,
-		Password: hashedPass,
+		Password: password,
 		Role:     Customer,
 	}
+
+	if err := user.IsValid(); err != nil {
+		return nil, fmt.Errorf("invalid inputs for user: %s", err)
+	}
+
+	hashedPass, err := createHashedPassword(password)
+	if err != nil {
+		return nil, fmt.Errorf("failed creating hashed pass: %s", err)
+	}
+	user.Password = hashedPass
 
 	return user, nil
 }
 
 func (u *User) GetID() uuid.UUID {
 	return u.ID
+}
+
+func (u *User) IsValid() error {
+	err := validate.Struct(u)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("err", err)
+
+	return nil
 }
 
 func (u *User) ComparePassword(password string) bool {
