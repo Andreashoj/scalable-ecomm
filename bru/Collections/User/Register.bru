@@ -1,0 +1,44 @@
+meta {
+  name: Register
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{host}}/auth/register
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "anz",
+    "email": "{{userEmail}}",
+    "password": "{{userPassword}}"
+  }
+}
+
+script:pre-request {
+  const { faker } = require('@faker-js/faker');
+  
+  // Generate once and save
+  const email = faker.internet.email();
+  const password = "TestPass123";
+  
+  bru.setVar("userEmail", email);
+  bru.setVar("userPassword", password);
+}
+
+tests {
+  const { faker } = require('@faker-js/faker');
+  
+  const response = res.getBody()
+  
+  bru.setVar("userEmail", bru.getVar("userEmail"))
+  bru.setVar("userPassword", bru.getVar("userPassword"))
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

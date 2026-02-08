@@ -40,7 +40,7 @@ func (h *routeHandler) registerRoutes(router *chi.Mux) error {
 
 		a.Group(func(g chi.Router) {
 			g.Use(auth.AuthMiddleware)
-			g.Post("/logout", logout)
+			g.Post("/logout", h.logout)
 			g.Get("/me", h.me)
 		})
 	})
@@ -104,10 +104,22 @@ func (h *routeHandler) login(w http.ResponseWriter, r *http.Request) {
 	rest.Response(w, response, 200)
 }
 
-func logout(w http.ResponseWriter, r *http.Request) {
-	// Accepts access_token
-	// Invalidate refresh token
+func (h *routeHandler) logout(w http.ResponseWriter, r *http.Request) {
+	var payload dto.LogoutRequestDTO
+	err := json.NewDecoder(r.Body).Decode(&payload)
+	if err != nil {
+		rest.ErrorResponse(w, 500, errors.BadRequest)
+		return
+	}
 
+	err = h.authService.InvalidateRefreshToken(payload.RefreshToken)
+	if err != nil {
+		h.logger.Error("failed logging user out", "error", err)
+		rest.ErrorResponse(w, 500, errors.BadRequest)
+		return
+	}
+
+	rest.Response(w, "", 201)
 	// Invalid access_token => 401
 	// Delete refresh_token => 201
 }

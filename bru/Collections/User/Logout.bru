@@ -1,0 +1,26 @@
+meta {
+  name: Logout
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{host}}/auth/logout
+  body: json
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+body:json {
+  {
+    "refreshToken": "{{refreshToken}}"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

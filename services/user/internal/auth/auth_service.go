@@ -13,6 +13,7 @@ type AuthService interface {
 	Login(payload dto.LoginRequestDTO) (string, string, error)
 	Logout(payload dto.LoginRequestDTO) (string, string, error)
 	GetUser(userID string) (*models.User, error)
+	InvalidateRefreshToken(refreshTokenID string) error
 }
 
 type authService struct {
@@ -31,8 +32,9 @@ func (a *authService) GetUser(userID string) (*models.User, error) {
 }
 
 func (a *authService) Logout(payload dto.LoginRequestDTO) (string, string, error) {
-	//TODO implement me
-	panic("implement me")
+	// Invalidate refresh token
+	// It's the consumer of the API's responsibility to invalidate current access token
+	return "", "", nil
 }
 
 func (a *authService) RegisterUser(payload dto.RegisterUserDTO) error {
@@ -58,11 +60,13 @@ func (a *authService) Login(payload dto.LoginRequestDTO) (string, string, error)
 
 	validLogin := user.ComparePassword(payload.Password)
 	if validLogin {
-		refreshToken := models.NewRefreshToken(user.GetID())
-		a.refreshTokenRepo.Save(refreshToken)
-		refreshTokenWithClaims, err := refreshToken.ToString()
+		refreshToken, err := models.NewRefreshToken(user.GetID())
 		if err != nil {
-			return "", "", fmt.Errorf("failed creating claims for refresh token: %s", err)
+			return "", "", fmt.Errorf("failed creating refresh token: %s", err)
+		}
+		err = a.refreshTokenRepo.Save(refreshToken)
+		if err != nil {
+			return "", "", fmt.Errorf("failed saving refresh token: %s", err)
 		}
 
 		accessTokenWithClaims, err := createAccessToken(user.GetID())
@@ -70,10 +74,19 @@ func (a *authService) Login(payload dto.LoginRequestDTO) (string, string, error)
 			return "", "", fmt.Errorf("failed creating access token: %s", err)
 		}
 
-		return refreshTokenWithClaims, accessTokenWithClaims, nil
+		return refreshToken.Token, accessTokenWithClaims, nil
 	}
 
 	return "", "", nil
+}
+
+func (a *authService) InvalidateRefreshToken(refreshToken string) error {
+	err := a.refreshTokenRepo.Delete(refreshToken)
+	if err != nil {
+		return fmt.Errorf("failed deleting refresh token: %s", err)
+	}
+
+	return nil
 }
 
 func NewAuthService(logger pgk.Logger, userRepo repos.UserRepo, token repos.RefreshTokenRepo) AuthService {

@@ -10,3 +10,7 @@ type RegisterUserDTO struct {
 	Email    string `json:"email,omitempty"`
 	Password string `json:"password,omitempty"`
 }
+
+type LogoutRequestDTO struct {
+	RefreshToken string `json:"refreshToken"`
+}

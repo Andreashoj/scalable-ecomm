@@ -11,28 +11,37 @@ import (
 type RefreshToken struct {
 	ID        string
 	UserID    uuid.UUID
+	Token     string
 	CreatedAt time.Time
 	ExpiresAt time.Time
 }
 
-func NewRefreshToken(userID uuid.UUID) *RefreshToken {
-	return &RefreshToken{
+func NewRefreshToken(userID uuid.UUID) (*RefreshToken, error) {
+	refreshToken := &RefreshToken{
 		ID:        uuid.NewString(),
 		UserID:    userID,
 		CreatedAt: time.Now(),
-		ExpiresAt: time.Now().Add(time.Hour * 720), // 30 days
+		ExpiresAt: time.Now().Add(time.Hour * 720),
 	}
+
+	token, err := CreateToken(userID.String())
+	if err != nil {
+		return nil, err
+	}
+
+	refreshToken.Token = token
+	return refreshToken, nil
 }
 
-func (r *RefreshToken) ToString() (string, error) {
+func CreateToken(userID string) (string, error) {
 	claims := struct {
 		userID string
 		jwt.RegisteredClaims
 	}{
-		userID: r.UserID.String(),
+		userID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(r.ExpiresAt),
-			IssuedAt:  jwt.NewNumericDate(r.CreatedAt),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 720)),
 		},
 	}
 

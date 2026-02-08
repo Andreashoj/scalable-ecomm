@@ -12,7 +12,7 @@ import (
 type User struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name" validate:"required,min=1"`
-	Password  string    `json:"password" validate:"required,min=8"`
+	Password  string    `json:"password,omitempty" validate:"required,min=8"`
 	Email     string    `json:"email" validate:"required,email"`
 	Role      Role      `json:"role"`
 	CreatedAt time.Time `json:"role"`
