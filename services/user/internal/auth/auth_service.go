@@ -5,6 +5,7 @@ import (
 	"andreasho/scalable-ecomm/services/user/internal/db/models"
 	"andreasho/scalable-ecomm/services/user/internal/db/repos"
 	"andreasho/scalable-ecomm/services/user/internal/dto"
+	"errors"
 	"fmt"
 )
 
@@ -13,13 +14,32 @@ type AuthService interface {
 	Login(payload dto.LoginRequestDTO) (string, string, error)
 	Logout(payload dto.LoginRequestDTO) (string, string, error)
 	GetUser(userID string) (*models.User, error)
-	InvalidateRefreshToken(refreshTokenID string) error
+	InvalidateRefreshToken(refreshToken string) error
+	RefreshAccessToken(token string) (string, error)
 }
 
 type authService struct {
 	userRepo         repos.UserRepo
 	refreshTokenRepo repos.RefreshTokenRepo
 	logger           pgk.Logger
+}
+
+func (a *authService) RefreshAccessToken(refreshToken string) (string, error) {
+	rToken, err := a.refreshTokenRepo.Find(refreshToken)
+	if err != nil {
+		return "", err
+	}
+
+	if !rToken.IsValid() {
+		return "", errors.New("refresh token expired")
+	}
+
+	accessToken, err := createAccessToken(rToken.UserID)
+	if err != nil {
+		return "", fmt.Errorf("failed creating access token: %s", err)
+	}
+
+	return accessToken, nil
 }
 
 func (a *authService) GetUser(userID string) (*models.User, error) {
@@ -48,7 +68,7 @@ func (a *authService) RegisterUser(payload dto.RegisterUserDTO) error {
 		return fmt.Errorf("failed saving user: %s", err)
 	}
 
-	a.logger.Info("Created user with ID: %s", user.GetID())
+	a.logger.Info("Created user with ID", "user", user.GetID())
 	return nil
 }
 

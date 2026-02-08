@@ -14,3 +14,7 @@ type RegisterUserDTO struct {
 type LogoutRequestDTO struct {
 	RefreshToken string `json:"refreshToken"`
 }
+
+type RefreshRequestDTO struct {
+	RefreshToken string `json:"refreshToken"`
+}

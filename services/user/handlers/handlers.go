@@ -36,6 +36,7 @@ func (h *routeHandler) registerRoutes(router *chi.Mux) error {
 	router.Route("/auth", func(a chi.Router) {
 		a.Post("/register", h.registerUser)
 		a.Post("/login", h.login)
+		a.Post("/refresh", h.refresh)
 		// Refresh endpoint
 
 		a.Group(func(g chi.Router) {
@@ -120,6 +121,28 @@ func (h *routeHandler) logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rest.Response(w, "", 201)
-	// Invalid access_token => 401
-	// Delete refresh_token => 201
+}
+
+func (h *routeHandler) refresh(w http.ResponseWriter, r *http.Request) {
+	var payload dto.RefreshRequestDTO
+	err := json.NewDecoder(r.Body).Decode(&payload)
+	if err != nil {
+		h.logger.Error("failed decoding refresh request", "error", err)
+		rest.ErrorResponse(w, 500, errors.BadRequest)
+		return
+	}
+
+	accessToken, err := h.authService.RefreshAccessToken(payload.RefreshToken)
+	if err != nil {
+		h.logger.Error("failed refreshing access token", "error", err)
+		rest.ErrorResponse(w, 500, errors.BadRequest)
+		return
+	}
+
+	response := map[string]string{
+		"accessToken": accessToken,
+	}
+
+	h.logger.Info("access token successfully refreshed")
+	rest.Response(w, response, 200)
 }

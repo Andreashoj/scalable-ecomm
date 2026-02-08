@@ -53,3 +53,7 @@ func CreateToken(userID string) (string, error) {
 
 	return tokenString, nil
 }
+
+func (r *RefreshToken) IsValid() bool {
+	return time.Now().Before(r.ExpiresAt)
+}

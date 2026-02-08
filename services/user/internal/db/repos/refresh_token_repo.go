@@ -8,11 +8,22 @@ import (
 
 type RefreshTokenRepo interface {
 	Save(token *models.RefreshToken) error
-	Delete(refreshTokenID string) error
+	Delete(refreshToken string) error
+	Find(refreshToken string) (*models.RefreshToken, error)
 }
 
 type refreshTokenRepo struct {
 	db *sql.DB
+}
+
+func (r *refreshTokenRepo) Find(refreshToken string) (*models.RefreshToken, error) {
+	var token models.RefreshToken
+	err := r.db.QueryRow(`SELECT id, token, user_id, created_at, expires_at FROM refresh_token WHERE token = $1`, refreshToken).Scan(&token.ID, &token.Token, &token.UserID, &token.CreatedAt, &token.ExpiresAt)
+	if err != nil {
+		return nil, fmt.Errorf("failed retrieving refresh token: %s", err)
+	}
+
+	return &token, nil
 }
 
 func (r *refreshTokenRepo) Delete(refreshToken string) error {
