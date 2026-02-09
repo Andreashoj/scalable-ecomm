@@ -12,7 +12,6 @@ import (
 type AuthService interface {
 	RegisterUser(payload dto.RegisterUserDTO) error
 	Login(payload dto.LoginRequestDTO) (string, string, error)
-	Logout(payload dto.LoginRequestDTO) (string, string, error)
 	GetUser(userID string) (*models.User, error)
 	InvalidateRefreshToken(refreshToken string) error
 	RefreshAccessToken(token string) (string, error)
@@ -51,12 +50,6 @@ func (a *authService) GetUser(userID string) (*models.User, error) {
 	return user, nil
 }
 
-func (a *authService) Logout(payload dto.LoginRequestDTO) (string, string, error) {
-	// Invalidate refresh token
-	// It's the consumer of the API's responsibility to invalidate current access token
-	return "", "", nil
-}
-
 func (a *authService) RegisterUser(payload dto.RegisterUserDTO) error {
 	user, err := models.NewUser(payload.Name, payload.Email, payload.Password)
 	if err != nil {
@@ -68,7 +61,7 @@ func (a *authService) RegisterUser(payload dto.RegisterUserDTO) error {
 		return fmt.Errorf("failed saving user: %s", err)
 	}
 
-	a.logger.Info("Created user with ID", "user", user.GetID())
+	a.logger.Info("Created user with ID", "info", user.GetID())
 	return nil
 }
 
