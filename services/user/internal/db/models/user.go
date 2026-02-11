@@ -35,7 +35,8 @@ func NewUser(name, email, password string) (*User, error) {
 		Role:     Customer,
 	}
 
-	if err := user.IsValid(); err != nil {
+	ok, err := user.IsValid()
+	if !ok {
 		return nil, fmt.Errorf("invalid inputs for user: %s", err)
 	}
 
@@ -52,15 +53,13 @@ func (u *User) GetID() uuid.UUID {
 	return u.ID
 }
 
-func (u *User) IsValid() error {
+func (u *User) IsValid() (bool, error) {
 	err := validate.Struct(u)
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	fmt.Println("err", err)
-
-	return nil
+	return true, nil
 }
 
 func (u *User) ComparePassword(password string) bool {

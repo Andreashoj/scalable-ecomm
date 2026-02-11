@@ -1,199 +1,115 @@
 package models
 
 import (
-	"reflect"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-func TestNewUser(t *testing.T) {
-	type args struct {
-		name     string
-		email    string
-		password string
+func TestUser_IsValid(t *testing.T) {
+	user := &User{
+		ID:        uuid.UUID{},
+		Name:      "Tester",
+		Password:  "12345678",
+		Email:     "andrewhoj@gmail.com",
+		Role:      Customer,
+		CreatedAt: time.Time{},
 	}
+
+	ok, err := user.IsValid()
+	if !ok {
+		t.Errorf("didn't expect error while validating user, got err: %s", err)
+	}
+}
+
+func TestUser_IsValidInvalidInputs(t *testing.T) {
 	tests := []struct {
-		name    string
-		args    args
-		want    *User
-		wantErr bool
+		name string
+		test *User
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Too short password",
+			test: &User{
+				ID:        uuid.UUID{},
+				Name:      "Tester",
+				Password:  "123",
+				Email:     "andrewhoj@gmail.com",
+				Role:      Customer,
+				CreatedAt: time.Time{},
+			},
+		},
+		{
+			name: "Wrongly formatted email",
+			test: &User{
+				ID:        uuid.UUID{},
+				Name:      "Tester",
+				Password:  "12345678",
+				Email:     "andrewhojgmail.com",
+				Role:      Customer,
+				CreatedAt: time.Time{},
+			},
+		},
+		{
+			name: "Wrongly formatted email and too short password",
+			test: &User{
+				ID:        uuid.UUID{},
+				Name:      "Tester",
+				Password:  "1234",
+				Email:     "andr.com",
+				Role:      Customer,
+				CreatedAt: time.Time{},
+			},
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewUser(tt.args.name, tt.args.email, tt.args.password)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("NewUser() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewUser() got = %v, want %v", got, tt.want)
+			ok, err := tt.test.IsValid()
+			if ok {
+				t.Errorf("expected to be not ok, error: %s", err)
 			}
 		})
 	}
 }
 
 func TestUser_ComparePassword(t *testing.T) {
-	type fields struct {
-		ID        uuid.UUID
-		Name      string
-		Password  string
-		Email     string
-		Role      Role
-		CreatedAt time.Time
+	pass := "123456789"
+	hash, err := createHashedPassword(pass)
+	if err != nil {
+		t.Errorf("didnt expect creation of hashed password to return error: %s", err)
 	}
-	type args struct {
-		password string
+
+	user := &User{
+		ID:        uuid.UUID{},
+		Name:      "Tester",
+		Password:  hash,
+		Email:     "andrewhoj@gmail.com",
+		Role:      Customer,
+		CreatedAt: time.Time{},
 	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			u := &User{
-				ID:        tt.fields.ID,
-				Name:      tt.fields.Name,
-				Password:  tt.fields.Password,
-				Email:     tt.fields.Email,
-				Role:      tt.fields.Role,
-				CreatedAt: tt.fields.CreatedAt,
-			}
-			if got := u.ComparePassword(tt.args.password); got != tt.want {
-				t.Errorf("ComparePassword() = %v, want %v", got, tt.want)
-			}
-		})
+
+	if !user.ComparePassword(pass) {
+		t.Error("expected passwords to not equal each other")
 	}
 }
 
-func TestUser_GetID(t *testing.T) {
-	type fields struct {
-		ID        uuid.UUID
-		Name      string
-		Password  string
-		Email     string
-		Role      Role
-		CreatedAt time.Time
+func TestUser_ComparePasswordIncorrectMatch(t *testing.T) {
+	hash, err := createHashedPassword("12345678")
+	if err != nil {
+		t.Errorf("didnt expect creation of hashed password to return error: %s", err)
 	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   uuid.UUID
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			u := &User{
-				ID:        tt.fields.ID,
-				Name:      tt.fields.Name,
-				Password:  tt.fields.Password,
-				Email:     tt.fields.Email,
-				Role:      tt.fields.Role,
-				CreatedAt: tt.fields.CreatedAt,
-			}
-			if got := u.GetID(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetID() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
 
-func TestUser_IsValid(t *testing.T) {
-	type fields struct {
-		ID        uuid.UUID
-		Name      string
-		Password  string
-		Email     string
-		Role      Role
-		CreatedAt time.Time
+	user := &User{
+		ID:        uuid.UUID{},
+		Name:      "Tester",
+		Password:  hash,
+		Email:     "andrewhoj@gmail.com",
+		Role:      Customer,
+		CreatedAt: time.Time{},
 	}
-	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			u := &User{
-				ID:        tt.fields.ID,
-				Name:      tt.fields.Name,
-				Password:  tt.fields.Password,
-				Email:     tt.fields.Email,
-				Role:      tt.fields.Role,
-				CreatedAt: tt.fields.CreatedAt,
-			}
-			if err := u.IsValid(); (err != nil) != tt.wantErr {
-				t.Errorf("IsValid() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
 
-func Test_createHashedPassword(t *testing.T) {
-	type args struct {
-		password string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    string
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := createHashedPassword(tt.args.password)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("createHashedPassword() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("createHashedPassword() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestUser_IsValid1(t *testing.T) {
-	type fields struct {
-		ID        uuid.UUID
-		Name      string
-		Password  string
-		Email     string
-		Role      Role
-		CreatedAt time.Time
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			u := &User{
-				ID:        tt.fields.ID,
-				Name:      tt.fields.Name,
-				Password:  tt.fields.Password,
-				Email:     tt.fields.Email,
-				Role:      tt.fields.Role,
-				CreatedAt: tt.fields.CreatedAt,
-			}
-			if err := u.IsValid(); (err != nil) != tt.wantErr {
-				t.Errorf("IsValid() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
+	if user.ComparePassword("87654321") {
+		t.Error("expected passwords to not equal each other")
 	}
 }
