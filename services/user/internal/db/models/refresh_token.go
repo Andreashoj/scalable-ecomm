@@ -24,7 +24,7 @@ func NewRefreshToken(userID uuid.UUID) (*RefreshToken, error) {
 		ExpiresAt: time.Now().Add(time.Hour * 720),
 	}
 
-	token, err := CreateToken(userID.String())
+	token, err := CreateToken(refreshToken)
 	if err != nil {
 		return nil, err
 	}
@@ -33,15 +33,15 @@ func NewRefreshToken(userID uuid.UUID) (*RefreshToken, error) {
 	return refreshToken, nil
 }
 
-func CreateToken(userID string) (string, error) {
+func CreateToken(rToken *RefreshToken) (string, error) {
 	claims := struct {
 		userID string
 		jwt.RegisteredClaims
 	}{
-		userID: userID,
+		userID: rToken.UserID.String(),
 		RegisteredClaims: jwt.RegisteredClaims{
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 720)),
+			IssuedAt:  jwt.NewNumericDate(rToken.CreatedAt),
+			ExpiresAt: jwt.NewNumericDate(rToken.ExpiresAt),
 		},
 	}
 
@@ -53,7 +53,6 @@ func CreateToken(userID string) (string, error) {
 
 	return tokenString, nil
 }
-
 func (r *RefreshToken) IsValid() bool {
 	return time.Now().Before(r.ExpiresAt)
 }

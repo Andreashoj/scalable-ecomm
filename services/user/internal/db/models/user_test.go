@@ -164,3 +164,36 @@ func Test_createHashedPassword(t *testing.T) {
 		})
 	}
 }
+
+func TestUser_IsValid1(t *testing.T) {
+	type fields struct {
+		ID        uuid.UUID
+		Name      string
+		Password  string
+		Email     string
+		Role      Role
+		CreatedAt time.Time
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			u := &User{
+				ID:        tt.fields.ID,
+				Name:      tt.fields.Name,
+				Password:  tt.fields.Password,
+				Email:     tt.fields.Email,
+				Role:      tt.fields.Role,
+				CreatedAt: tt.fields.CreatedAt,
+			}
+			if err := u.IsValid(); (err != nil) != tt.wantErr {
+				t.Errorf("IsValid() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

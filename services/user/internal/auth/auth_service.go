@@ -90,7 +90,7 @@ func (a *authService) Login(payload dto.LoginRequestDTO) (string, string, error)
 		return refreshToken.Token, accessTokenWithClaims, nil
 	}
 
-	return "", "", nil
+	return "", "", errors.New("password did not match")
 }
 
 func (a *authService) InvalidateRefreshToken(refreshToken string) error {
