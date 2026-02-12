@@ -37,7 +37,6 @@ func (h *routeHandler) registerRoutes(router *chi.Mux) error {
 		a.Post("/register", h.registerUser)
 		a.Post("/login", h.login)
 		a.Post("/refresh", h.refresh)
-		// Refresh endpoint
 
 		a.Group(func(g chi.Router) {
 			g.Use(auth.AuthMiddleware)
@@ -65,7 +64,7 @@ func (h *routeHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rest.Response(w, "success", 200)
+	rest.Response(w, "", 201) // TODO: empty responses
 }
 
 func (h *routeHandler) me(w http.ResponseWriter, r *http.Request) {
@@ -97,9 +96,9 @@ func (h *routeHandler) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := map[string]interface{}{
-		"refreshToken": refreshToken,
-		"accessToken":  accessToken,
+	response := dto.LoginResponseDTO{
+		RefreshToken: refreshToken,
+		AccessToken:  accessToken,
 	}
 
 	rest.Response(w, response, 200)
@@ -139,8 +138,8 @@ func (h *routeHandler) refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := map[string]string{
-		"accessToken": accessToken,
+	response := dto.RefreshResponseDTO{
+		AccessToken: accessToken,
 	}
 
 	h.logger.Info("access token successfully refreshed")

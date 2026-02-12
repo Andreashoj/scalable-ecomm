@@ -1,18 +1,14 @@
 package auth
 
 import (
-	"andreasho/scalable-ecomm/pgk"
 	"andreasho/scalable-ecomm/services/user/internal/db/models"
-	"andreasho/scalable-ecomm/services/user/internal/db/repos"
 	"andreasho/scalable-ecomm/services/user/internal/dto"
-	"fmt"
 	"testing"
 	"time"
 )
 
 func TestAuthService_LoginSuccess(t *testing.T) {
-	service, userRepo, _ := setupAuthService()
-	// Precondition
+	service, userRepo, _ := SetupAuthService()
 	user, _ := models.NewUser("Andrew", "andrewhoj@gmail.com", "123456789")
 	userRepo.Save(user)
 
@@ -32,7 +28,7 @@ func TestAuthService_LoginSuccess(t *testing.T) {
 }
 
 func TestAuthService_LoginInvalidPassword(t *testing.T) {
-	service, userRepo, _ := setupAuthService()
+	service, userRepo, _ := SetupAuthService()
 
 	user, _ := models.NewUser("andrew", "andrewhoj@gmail.com", "123456789")
 	userRepo.Save(user)
@@ -54,7 +50,7 @@ func TestAuthService_LoginInvalidPassword(t *testing.T) {
 }
 
 func TestAuthService_LoginUserNotFound(t *testing.T) {
-	service, _, _ := setupAuthService()
+	service, _, _ := SetupAuthService()
 
 	payload := dto.LoginRequestDTO{
 		Email:    "andrewhoj@gmail.com",
@@ -69,7 +65,7 @@ func TestAuthService_LoginUserNotFound(t *testing.T) {
 }
 
 func TestAuthService_RegisterUser(t *testing.T) {
-	service, _, _ := setupAuthService()
+	service, _, _ := SetupAuthService()
 
 	payload := dto.RegisterUserDTO{
 		Name:     "andreas",
@@ -85,7 +81,7 @@ func TestAuthService_RegisterUser(t *testing.T) {
 }
 
 func TestAuthService_RegisterUserInvalidInputs(t *testing.T) {
-	service, _, _ := setupAuthService()
+	service, _, _ := SetupAuthService()
 
 	tests := []struct {
 		name string
@@ -129,7 +125,7 @@ func TestAuthService_RegisterUserInvalidInputs(t *testing.T) {
 
 // Get user
 func TestAuthService_GetUser(t *testing.T) {
-	service, userRepo, _ := setupAuthService()
+	service, userRepo, _ := SetupAuthService()
 
 	user, _ := models.NewUser("andrew", "andrewhoj@gmail.com", "12345678")
 	userRepo.Save(user)
@@ -146,7 +142,7 @@ func TestAuthService_GetUser(t *testing.T) {
 }
 
 func TestAuthService_GetUserNotFound(t *testing.T) {
-	service, _, _ := setupAuthService()
+	service, _, _ := SetupAuthService()
 	_, err := service.GetUser("")
 
 	if err == nil {
@@ -155,7 +151,7 @@ func TestAuthService_GetUserNotFound(t *testing.T) {
 }
 
 func TestAuthService_InvalidateRefreshToken(t *testing.T) {
-	service, _, refreshTokenRepo := setupAuthService()
+	service, _, refreshTokenRepo := SetupAuthService()
 
 	user, _ := models.NewUser("andrew", "andrewhoj@gmail.com", "12345678")
 	refreshToken, _ := models.NewRefreshToken(user.GetID())
@@ -177,7 +173,7 @@ func TestAuthService_InvalidateRefreshToken(t *testing.T) {
 }
 
 func TestAuthService_InvalidateRefreshTokenInvalidToken(t *testing.T) {
-	service, _, _ := setupAuthService()
+	service, _, _ := SetupAuthService()
 	err := service.InvalidateRefreshToken("")
 
 	if err == nil {
@@ -186,7 +182,7 @@ func TestAuthService_InvalidateRefreshTokenInvalidToken(t *testing.T) {
 }
 
 func TestAuthService_RefreshAccessToken(t *testing.T) {
-	service, _, refreshTokenRepo := setupAuthService()
+	service, _, refreshTokenRepo := SetupAuthService()
 
 	user, _ := models.NewUser("andrew", "andrewhoj@gmail.com", "12345678")
 	refreshToken, _ := models.NewRefreshToken(user.GetID())
@@ -206,7 +202,7 @@ func TestAuthService_RefreshAccessToken(t *testing.T) {
 }
 
 func TestAuthService_RefreshAccessTokenExpiredRefreshToken(t *testing.T) {
-	service, _, refreshTokenRepo := setupAuthService()
+	service, _, refreshTokenRepo := SetupAuthService()
 	user, _ := models.NewUser("andrew", "andrewhoj@gmail.com", "12345678")
 	token := &models.RefreshToken{
 		ID:        "",
@@ -234,73 +230,10 @@ func TestAuthService_RefreshAccessTokenExpiredRefreshToken(t *testing.T) {
 }
 
 func TestAuthService_RefreshAccessTokenNotFound(t *testing.T) {
-	service, _, _ := setupAuthService()
+	service, _, _ := SetupAuthService()
 	_, err := service.RefreshAccessToken("")
 
 	if err == nil {
 		t.Errorf("expected error while refreshing non-existing access token, instead got nil")
 	}
-}
-
-func setupAuthService() (AuthService, repos.UserRepo, repos.RefreshTokenRepo) {
-	logger := pgk.NewLogger()
-	userRepo := &InMemoryUserRepo{users: make(map[string]*models.User)}
-	tokenRepo := &InMemoryRefreshTokenRepo{tokens: make(map[string]*models.RefreshToken)}
-	return NewAuthService(logger, userRepo, tokenRepo), userRepo, tokenRepo
-}
-
-type InMemoryUserRepo struct {
-	users map[string]*models.User
-}
-
-func (u *InMemoryUserRepo) Save(user *models.User) error {
-	u.users[user.ID.String()] = user
-	return nil
-}
-
-func (u *InMemoryUserRepo) FindByEmail(email string) (*models.User, error) {
-	for user := range u.users {
-		if u.users[user].Email == email {
-			return u.users[user], nil
-		}
-	}
-
-	return nil, fmt.Errorf("no user with that email")
-}
-
-func (u *InMemoryUserRepo) FindByID(ID string) (*models.User, error) {
-	user, ok := u.users[ID]
-	if !ok {
-		return nil, fmt.Errorf("no user with that id")
-	}
-
-	return user, nil
-}
-
-type InMemoryRefreshTokenRepo struct {
-	tokens map[string]*models.RefreshToken
-}
-
-func (r *InMemoryRefreshTokenRepo) Save(token *models.RefreshToken) error {
-	r.tokens[token.Token] = token
-	return nil
-}
-
-func (r *InMemoryRefreshTokenRepo) Delete(tokenValue string) error {
-	_, ok := r.tokens[tokenValue]
-	if !ok {
-		return fmt.Errorf("no token with that value")
-	}
-
-	delete(r.tokens, tokenValue)
-	return nil
-}
-
-func (r *InMemoryRefreshTokenRepo) Find(tokenVal string) (*models.RefreshToken, error) {
-	token, ok := r.tokens[tokenVal]
-	if !ok {
-		return nil, fmt.Errorf("no token with that value")
-	}
-
-	return token, nil
 }

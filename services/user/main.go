@@ -2,10 +2,10 @@ package main
 
 import (
 	"andreasho/scalable-ecomm/pgk"
-	"andreasho/scalable-ecomm/services/user/handlers"
 	"andreasho/scalable-ecomm/services/user/internal/auth"
 	"andreasho/scalable-ecomm/services/user/internal/db"
 	"andreasho/scalable-ecomm/services/user/internal/db/repos"
+	"andreasho/scalable-ecomm/services/user/internal/handlers"
 	"fmt"
 	"net/http"
 
