@@ -1,0 +1,12 @@
+meta {
+  name: Product
+}
+
+auth {
+  mode: inherit
+}
+
+vars:pre-request {
+  host: http://localhost:8080
+  ~host: http://localhost:8080/api/product
+}

@@ -1,7 +1,27 @@
 package main
 
-import "fmt"
+import (
+	"andreasho/scalable-ecomm/pgk"
+	"andreasho/scalable-ecomm/services/product/internal/db"
+	"andreasho/scalable-ecomm/services/product/internal/handlers"
+	"net/http"
+
+	"github.com/go-chi/chi"
+)
 
 func main() {
-	fmt.Println("hello")
+	// Get ENV's in order
+
+	logger := pgk.NewLogger()
+	r := chi.NewRouter()
+
+	_, err := db.StartDB()
+	if err != nil {
+		logger.Error("failed starting db: %s", err)
+		return
+	}
+
+	handlers.StartRouterHandlers(r)
+
+	http.ListenAndServe(":8080", r)
 }

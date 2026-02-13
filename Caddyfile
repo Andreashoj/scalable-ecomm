@@ -3,4 +3,9 @@
        uri strip_prefix /api/user
        reverse_proxy user-service:8080
    }
+
+    route /api/product/* {
+       uri strip_prefix /api/product
+       reverse_proxy product-service:8080
+   }
 }

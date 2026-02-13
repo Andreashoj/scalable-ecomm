@@ -49,11 +49,20 @@ services:
       context: .
       dockerfile: services/shopping/Dockerfile
 
-  postgres: # For now, a single DB
+  user-postgres:
     image: postgres:15
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: secret
       POSTGRES_DB: user_service
+    ports:
+      - "5432:5432"
+
+  product-postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: product_service
     ports:
       - "5432:5432"
