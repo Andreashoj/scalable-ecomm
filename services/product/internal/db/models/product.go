@@ -3,12 +3,16 @@ package models
 import "github.com/google/uuid"
 
 type Product struct {
-	ID         uuid.UUID  `json:"ID,omitempty"`
+	ID         uuid.UUID  `json:"id,omitempty"`
 	Name       string     `json:"name,omitempty"`
-	Price      int        `json:"price,omitempty"`
+	Price      float64    `json:"price,omitempty"`
 	Categories []Category `json:"categories,omitempty"`
 }
 
-func NewProduct() *Product {
-	return &Product{}
+func NewProduct(name string, price float64) *Product {
+	return &Product{
+		ID:    uuid.New(),
+		Name:  name,
+		Price: price,
+	}
 }
