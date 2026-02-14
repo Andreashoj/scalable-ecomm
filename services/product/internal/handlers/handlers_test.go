@@ -15,7 +15,7 @@ import (
 
 // What handlers do we need for produtcs
 // /product?sort=>price/date
-// /product/:id
+// /product/:id [x]
 // /category?sort=>price/date
 // /product => POST
 

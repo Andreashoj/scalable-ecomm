@@ -19,10 +19,27 @@ type productRepo struct {
 }
 
 func (p *productRepo) Find(id uuid.UUID) (*models.Product, error) {
-	var product models.Product
-	err := p.DB.QueryRow(`SELECT id, name, price FROM product WHERE id = $1`, id.String()).Scan(&product.ID, &product.Name, &product.Price)
+	rows, err := p.DB.Query(`
+		SELECT p.id, p.name, p.price, c.id, c.name
+		FROM product p
+		LEFT JOIN product_category
+		ON p.id= product_category.product_id
+		LEFT JOIN category c
+		ON product_category.category_id = c.id
+		WHERE p.id = $1;`, id.String())
 	if err != nil {
 		return nil, fmt.Errorf("failed querying product with id: %s got err %s", id.String(), err)
+	}
+
+	var product models.Product
+	for rows.Next() {
+		var category models.Category
+		err = rows.Scan(&product.ID, &product.Name, &product.Price, &category.ID, &category.Name)
+		if err != nil {
+			return nil, fmt.Errorf("failed mapping product query: %s", err)
+		}
+
+		product.Categories = append(product.Categories, category)
 	}
 
 	return &product, nil

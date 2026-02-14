@@ -3,7 +3,7 @@ package models
 import "github.com/google/uuid"
 
 type Category struct {
-	ID       uuid.UUID `json:"ID,omitempty"`
+	ID       uuid.UUID `json:"id,omitempty"`
 	Name     string    `json:"name,omitempty"`
 	Products []Product `json:"products,omitempty"`
 }
