@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
+	"github.com/google/uuid"
 )
 
 type RouterHandler struct {
@@ -21,6 +22,8 @@ func StartRouterHandlers(r *chi.Mux, logger pgk.Logger, productCatalogService se
 	}
 
 	r.Get("/products", h.GetProducts)
+	r.Get("/product/{id}", h.GetProduct)
+
 	return nil
 }
 
@@ -33,4 +36,23 @@ func (h *RouterHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rest.Response(w, products, 200)
+}
+
+func (h *RouterHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	productID, err := uuid.Parse(idStr)
+	if err != nil {
+		h.logger.Error("non existent id passed in as query parameter for product", "error", err)
+		w.WriteHeader(404)
+		return
+	}
+
+	product, err := h.productCatalogService.GetProduct(productID)
+	if err != nil {
+		h.logger.Error("couldn't find product with matching id", "error", err)
+		rest.ErrorResponse(w, 404, "couldn't find product matching that description")
+		return
+	}
+
+	rest.Response(w, product, 200)
 }

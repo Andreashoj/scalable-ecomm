@@ -2,7 +2,11 @@ package services
 
 import (
 	"andreasho/scalable-ecomm/services/product/internal/db/models"
+	"andreasho/scalable-ecomm/services/product/internal/db/repos"
+	"errors"
 	"fmt"
+
+	"github.com/google/uuid"
 )
 
 type productRepoMock struct {
@@ -18,14 +22,30 @@ func (p *productRepoMock) GetProducts() ([]models.Product, error) {
 	return products, nil
 }
 
-func SetupProductCatalogService() ProductCatalogService {
+func (p *productRepoMock) Save(product *models.Product) error {
+	p.products[product.ID.String()] = *product
+	return nil
+}
+
+func (p *productRepoMock) Find(id uuid.UUID) (*models.Product, error) {
+	product, exists := p.products[id.String()]
+	if !exists {
+		return nil, errors.New("couldn't find product with that id")
+	}
+
+	return &product, nil
+}
+
+func SetupProductCatalogService() (ProductCatalogService, repos.ProductRepo) {
 	products := make(map[string]models.Product)
 	for i := 0; i < 5; i++ {
 		product := models.NewProduct(fmt.Sprintf("product-%v", i), float64(10*i))
 		products[product.ID.String()] = *product
 	}
 
-	return &productCatalogService{productRepo: &productRepoMock{
+	productRepo := &productRepoMock{
 		products: products,
-	}}
+	}
+
+	return &productCatalogService{productRepo: productRepo}, productRepo
 }
