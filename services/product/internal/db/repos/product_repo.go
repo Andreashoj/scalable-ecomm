@@ -1,7 +1,7 @@
 package repos
 
 import (
-	"andreasho/scalable-ecomm/services/product/internal/db/models"
+	"andreasho/scalable-ecomm/services/product/internal/domain"
 	"database/sql"
 	"fmt"
 
@@ -9,16 +9,16 @@ import (
 )
 
 type ProductRepo interface {
-	GetProducts() ([]models.Product, error)
-	Find(id uuid.UUID) (*models.Product, error)
-	Save(product *models.Product) error
+	GetProducts(search *domain.ProductSearch) ([]domain.Product, error)
+	Find(id uuid.UUID) (*domain.Product, error)
+	Save(product *domain.Product) error
 }
 
 type productRepo struct {
 	DB *sql.DB
 }
 
-func (p *productRepo) Find(id uuid.UUID) (*models.Product, error) {
+func (p *productRepo) Find(id uuid.UUID) (*domain.Product, error) {
 	rows, err := p.DB.Query(`
 		SELECT p.id, p.name, p.price, c.id, c.name
 		FROM product p
@@ -27,13 +27,14 @@ func (p *productRepo) Find(id uuid.UUID) (*models.Product, error) {
 		LEFT JOIN category c
 		ON product_category.category_id = c.id
 		WHERE p.id = $1;`, id.String())
+
 	if err != nil {
 		return nil, fmt.Errorf("failed querying product with id: %s got err %s", id.String(), err)
 	}
 
-	var product models.Product
+	var product domain.Product
 	for rows.Next() {
-		var category models.Category
+		var category domain.Category
 		err = rows.Scan(&product.ID, &product.Name, &product.Price, &category.ID, &category.Name)
 		if err != nil {
 			return nil, fmt.Errorf("failed mapping product query: %s", err)
@@ -45,21 +46,25 @@ func (p *productRepo) Find(id uuid.UUID) (*models.Product, error) {
 	return &product, nil
 }
 
-func (p *productRepo) Save(product *models.Product) error {
-	//TODO implement me
-	panic("implement me")
+func (p *productRepo) Save(product *domain.Product) error {
+	_, err := p.DB.Exec(`INSERT INTO product (id, name, price, created_at) VALUES ($1, $2, $3, $4)`, product.ID, product.Name, product.Price, product.CreatedAt)
+	if err != nil {
+		return fmt.Errorf("failed creating product: %s", err)
+	}
+
+	return nil
 }
 
-func (p *productRepo) GetProducts() ([]models.Product, error) {
-	rows, err := p.DB.Query(`SELECT id, name, price FROM product`)
+func (p *productRepo) GetProducts(productSearch *domain.ProductSearch) ([]domain.Product, error) {
+	rows, err := p.DB.Query(`SELECT id, name, price FROM product ORDER BY $1 $2`, productSearch.Sort.ToSQL(), productSearch.Order.ToSQL())
 
 	if err != nil {
 		return nil, fmt.Errorf("failed querying db for products: %s", err)
 	}
 
-	products := make([]models.Product, 0)
+	products := make([]domain.Product, 0)
 	for rows.Next() {
-		var product models.Product
+		var product domain.Product
 		if err = rows.Scan(&product.ID, &product.Name, &product.Price); err != nil {
 			return nil, fmt.Errorf("failed scanning product: %s", err)
 		}

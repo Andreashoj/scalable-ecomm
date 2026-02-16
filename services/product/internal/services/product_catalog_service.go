@@ -1,23 +1,23 @@
 package services
 
 import (
-	"andreasho/scalable-ecomm/services/product/internal/db/models"
 	"andreasho/scalable-ecomm/services/product/internal/db/repos"
+	"andreasho/scalable-ecomm/services/product/internal/domain"
 	"fmt"
 
 	"github.com/google/uuid"
 )
 
 type ProductCatalogService interface {
-	GetProducts() ([]models.Product, error)
-	GetProduct(id uuid.UUID) (*models.Product, error)
+	GetProducts(search *domain.ProductSearch) ([]domain.Product, error)
+	GetProduct(id uuid.UUID) (*domain.Product, error)
 }
 
 type productCatalogService struct {
 	productRepo repos.ProductRepo
 }
 
-func (p *productCatalogService) GetProduct(id uuid.UUID) (*models.Product, error) {
+func (p *productCatalogService) GetProduct(id uuid.UUID) (*domain.Product, error) {
 	product, err := p.productRepo.Find(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed retrieving product: %s", err)
@@ -26,8 +26,16 @@ func (p *productCatalogService) GetProduct(id uuid.UUID) (*models.Product, error
 	return product, nil
 }
 
-func (p *productCatalogService) GetProducts() ([]models.Product, error) {
-	products, err := p.productRepo.GetProducts()
+func (p *productCatalogService) GetProducts(productSearch *domain.ProductSearch) ([]domain.Product, error) {
+	if !productSearch.Order.IsValid() {
+		productSearch.Order = domain.OrderAscending
+	}
+
+	if !productSearch.Sort.IsValid() {
+		productSearch.Sort = domain.SortDate
+	}
+
+	products, err := p.productRepo.GetProducts(productSearch)
 	if err != nil {
 		return nil, fmt.Errorf("failed getting products from db: %s", err)
 	}

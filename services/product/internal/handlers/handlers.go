@@ -3,6 +3,7 @@ package handlers
 import (
 	"andreasho/scalable-ecomm/pgk"
 	"andreasho/scalable-ecomm/pgk/rest"
+	"andreasho/scalable-ecomm/services/product/internal/domain"
 	"andreasho/scalable-ecomm/services/product/internal/services"
 	"net/http"
 
@@ -28,7 +29,12 @@ func StartRouterHandlers(r *chi.Mux, logger pgk.Logger, productCatalogService se
 }
 
 func (h *RouterHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
-	products, err := h.productCatalogService.GetProducts()
+	order := chi.URLParam(r, "order")
+	sort := chi.URLParam(r, "sort")
+
+	productSearch := domain.NewProductSearch(order, sort)
+
+	products, err := h.productCatalogService.GetProducts(productSearch)
 	if err != nil {
 		h.logger.Error("failed getting products", "error", err)
 		rest.ErrorResponse(w, 500, "failed retrieving products")

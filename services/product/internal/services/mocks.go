@@ -1,51 +1,35 @@
 package services
 
 import (
-	"andreasho/scalable-ecomm/services/product/internal/db/models"
+	"andreasho/scalable-ecomm/services/product/internal/db"
 	"andreasho/scalable-ecomm/services/product/internal/db/repos"
-	"errors"
+	"andreasho/scalable-ecomm/services/product/internal/domain"
 	"fmt"
+	"testing"
+	"time"
 
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
 )
 
-type productRepoMock struct {
-	products map[string]models.Product
-}
+func SetupProductCatalogService(t *testing.T, productsToAdd int) (ProductCatalogService, repos.ProductRepo) {
+	DB := db.SetupTestDB(t)
+	prodRepo := repos.NewProductRepo(DB)
 
-func (p *productRepoMock) GetProducts() ([]models.Product, error) {
-	var products []models.Product
-	for _, product := range p.products {
-		products = append(products, product)
+	for i := 0; i < productsToAdd; i++ {
+		product := &domain.Product{
+			ID:         uuid.New(),
+			Name:       fmt.Sprintf("product-%v", i),
+			Price:      float64(i) * 10,
+			Categories: nil,
+			CreatedAt:  time.Now().Add(-time.Minute * time.Duration(i)),
+		}
+		err := prodRepo.Save(product)
+		fmt.Println("no fail?")
+		if err != nil {
+			t.Fatalf("failed creating product: :%v", err)
+		}
 	}
 
-	return products, nil
-}
-
-func (p *productRepoMock) Save(product *models.Product) error {
-	p.products[product.ID.String()] = *product
-	return nil
-}
-
-func (p *productRepoMock) Find(id uuid.UUID) (*models.Product, error) {
-	product, exists := p.products[id.String()]
-	if !exists {
-		return nil, errors.New("couldn't find product with that id")
-	}
-
-	return &product, nil
-}
-
-func SetupProductCatalogService() (ProductCatalogService, repos.ProductRepo) {
-	products := make(map[string]models.Product)
-	for i := 0; i < 5; i++ {
-		product := models.NewProduct(fmt.Sprintf("product-%v", i), float64(10*i))
-		products[product.ID.String()] = *product
-	}
-
-	productRepo := &productRepoMock{
-		products: products,
-	}
-
-	return &productCatalogService{productRepo: productRepo}, productRepo
+	return &productCatalogService{productRepo: prodRepo}, prodRepo
 }
