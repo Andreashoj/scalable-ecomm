@@ -2,10 +2,15 @@ package handlers
 
 import (
 	"andreasho/scalable-ecomm/pgk"
+	"andreasho/scalable-ecomm/pgk/errors"
 	"andreasho/scalable-ecomm/pgk/rest"
 	"andreasho/scalable-ecomm/services/product/internal/domain"
+	"andreasho/scalable-ecomm/services/product/internal/dto"
 	"andreasho/scalable-ecomm/services/product/internal/services"
+	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
@@ -26,9 +31,36 @@ func StartRouterHandlers(r *chi.Mux, logger pgk.Logger, productCatalogService se
 
 	r.Get("/products", h.GetProducts)
 	r.Get("/product/{id}", h.GetProduct)
-	r.Post("/product/{id}", h.GetProduct)
+	r.Post("/product", h.CreateProduct)
 
 	return nil
+}
+
+func (h *RouterHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
+	authorizationHeader := r.Header.Get("Authorization")
+	token := strings.TrimPrefix(authorizationHeader, "Bearer ")
+
+	if !h.userService.IsAdmin(token) {
+		rest.ErrorResponse(w, 401, errors.Unauthorized)
+		return
+	}
+
+	var payload dto.CreateProductRequest
+	err := json.NewDecoder(r.Body).Decode(&payload)
+	if err != nil {
+		h.logger.Error(fmt.Sprintf("failed decoding payload request: %s", err))
+		rest.ErrorResponse(w, 500, errors.BadRequest)
+		return
+	}
+
+	product, err := h.productCatalogService.CreateProduct(payload)
+	if err != nil {
+		h.logger.Error("failed creating product: %v", err)
+		rest.ErrorResponse(w, 500, errors.BadRequest)
+		return
+	}
+
+	rest.Response(w, product, 200)
 }
 
 func (h *RouterHandler) GetProducts(w http.ResponseWriter, r *http.Request) {

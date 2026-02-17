@@ -46,6 +46,20 @@ func TestHandler_CreateProduct(t *testing.T) {
 	}
 }
 
+func TestHandler_CreateProductUnauthorized(t *testing.T) {
+	r, _, _ := handlerSetup(t, 0, false)
+
+	body := `{"name": "VHS player", "price": 2819}`
+	req := httptest.NewRequest("POST", "/product", strings.NewReader(body))
+	w := httptest.NewRecorder()
+
+	r.ServeHTTP(w, req)
+
+	if w.Code != 401 {
+		t.Errorf("expected status 401, instead got %v", w.Code)
+	}
+}
+
 func TestHandler_Product(t *testing.T) {
 	r, _, productRepo := handlerSetup(t, 0, false)
 
