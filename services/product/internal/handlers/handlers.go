@@ -29,8 +29,8 @@ func StartRouterHandlers(r *chi.Mux, logger pgk.Logger, productCatalogService se
 }
 
 func (h *RouterHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
-	order := chi.URLParam(r, "order")
-	sort := chi.URLParam(r, "sort")
+	order := r.URL.Query().Get("order")
+	sort := r.URL.Query().Get("sort")
 
 	productSearch := domain.NewProductSearch(order, sort)
 

@@ -17,7 +17,7 @@ import (
 // /product [X]
 // / query params => ?sort=>price/date []
 // /product/:id [X]
-// /category?sort=>price/date
+// /category?sort=>price/date [X]
 // /product => POST
 
 func TestHandler_Product(t *testing.T) {
@@ -130,8 +130,8 @@ func TestHandler_ProductsDateAscending(t *testing.T) {
 			continue
 		}
 
-		if product.CreatedAt.After(previousProductDate) {
-			t.Errorf("expected products date to be before previous products. Current product: %s, previous product: %s", product.CreatedAt, previousProductDate)
+		if product.CreatedAt.Before(previousProductDate) {
+			t.Errorf("expected products to be in ascending order. Current product: %s, previous product: %s", product.CreatedAt, previousProductDate)
 		}
 
 		previousProductDate = product.CreatedAt
@@ -160,7 +160,7 @@ func TestHandler_ProductsDateDescending(t *testing.T) {
 			continue
 		}
 
-		if product.CreatedAt.Before(previousProductDate) {
+		if product.CreatedAt.After(previousProductDate) {
 			t.Errorf("expected products date to be before previous products. Current product: %s, previous product: %s", product.CreatedAt, previousProductDate)
 		}
 
@@ -191,7 +191,7 @@ func TestHandler_ProductSearchInvalidInputs(t *testing.T) {
 			continue
 		}
 
-		if product.CreatedAt.After(previousProductDate) {
+		if product.CreatedAt.Before(previousProductDate) {
 			t.Errorf("expected products date to be before previous products. Current product: %s, previous product: %s", product.CreatedAt, previousProductDate)
 		}
 
