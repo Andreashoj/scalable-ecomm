@@ -14,16 +14,19 @@ import (
 type RouterHandler struct {
 	logger                pgk.Logger
 	productCatalogService services.ProductCatalogService
+	userService           services.UserService
 }
 
-func StartRouterHandlers(r *chi.Mux, logger pgk.Logger, productCatalogService services.ProductCatalogService) error {
+func StartRouterHandlers(r *chi.Mux, logger pgk.Logger, productCatalogService services.ProductCatalogService, userService services.UserService) error {
 	h := &RouterHandler{
 		logger:                logger,
 		productCatalogService: productCatalogService,
+		userService:           userService,
 	}
 
 	r.Get("/products", h.GetProducts)
 	r.Get("/product/{id}", h.GetProduct)
+	r.Post("/product/{id}", h.GetProduct)
 
 	return nil
 }

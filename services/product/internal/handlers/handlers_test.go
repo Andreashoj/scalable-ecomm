@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/go-chi/chi"
@@ -20,8 +21,33 @@ import (
 // /category?sort=>price/date [X]
 // /product => POST
 
+func TestHandler_CreateProduct(t *testing.T) {
+	r, _, productRepo := handlerSetup(t, 0, true)
+
+	body := `{"name": "VHS player", "price": 2819}`
+	req := httptest.NewRequest("POST", "/product", strings.NewReader(body))
+	w := httptest.NewRecorder()
+
+	r.ServeHTTP(w, req)
+
+	if w.Code != 200 {
+		t.Errorf("expected status 200, instead got %v", w.Code)
+	}
+
+	var response domain.Product
+	err := json.Unmarshal([]byte(w.Body.String()), &response)
+	if err != nil {
+		t.Errorf("failed decoding json response to product: %v", err)
+	}
+
+	_, err = productRepo.Find(response.ID)
+	if err != nil {
+		t.Errorf("expected to find posted product in DB, but got: %v", err)
+	}
+}
+
 func TestHandler_Product(t *testing.T) {
-	r, _, productRepo := handlerSetup(t, 0)
+	r, _, productRepo := handlerSetup(t, 0, false)
 
 	product := domain.NewProduct("tester", float64(8291))
 	err := productRepo.Save(product)
@@ -50,7 +76,7 @@ func TestHandler_Product(t *testing.T) {
 }
 
 func TestHandler_ProductNotFound(t *testing.T) {
-	r, _, _ := handlerSetup(t, 0)
+	r, _, _ := handlerSetup(t, 0, false)
 
 	req := httptest.NewRequest("GET", fmt.Sprintf("/product/random-param"), nil)
 	w := httptest.NewRecorder()
@@ -64,7 +90,7 @@ func TestHandler_ProductNotFound(t *testing.T) {
 
 func TestHandler_Products(t *testing.T) {
 	productAmount := 5
-	r, _, _ := handlerSetup(t, productAmount)
+	r, _, _ := handlerSetup(t, productAmount, false)
 	req := httptest.NewRequest("GET", "/products", nil)
 	w := httptest.NewRecorder()
 
@@ -87,7 +113,7 @@ func TestHandler_Products(t *testing.T) {
 
 func TestHandler_ProductsNotFound(t *testing.T) {
 	productAmount := 0
-	r, _, _ := handlerSetup(t, productAmount)
+	r, _, _ := handlerSetup(t, productAmount, false)
 	req := httptest.NewRequest("GET", "/products", nil)
 	w := httptest.NewRecorder()
 
@@ -109,7 +135,7 @@ func TestHandler_ProductsNotFound(t *testing.T) {
 }
 
 func TestHandler_ProductsDateAscending(t *testing.T) {
-	r, _, _ := handlerSetup(t, 50)
+	r, _, _ := handlerSetup(t, 50, false)
 	req := httptest.NewRequest("GET", "/products?sort=date&order=ascending", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
@@ -139,7 +165,7 @@ func TestHandler_ProductsDateAscending(t *testing.T) {
 }
 
 func TestHandler_ProductsDateDescending(t *testing.T) {
-	r, _, _ := handlerSetup(t, 50)
+	r, _, _ := handlerSetup(t, 50, false)
 	req := httptest.NewRequest("GET", "/products?sort=date&order=descending", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
@@ -169,7 +195,7 @@ func TestHandler_ProductsDateDescending(t *testing.T) {
 }
 
 func TestHandler_ProductSearchInvalidInputs(t *testing.T) {
-	r, _, _ := handlerSetup(t, 50)
+	r, _, _ := handlerSetup(t, 50, false)
 	req := httptest.NewRequest("GET", "/products?sort=invalidsortingoption&order=invalidngorderopion", nil) // ascending is the default option if order option validation fails
 	w := httptest.NewRecorder()
 
@@ -199,11 +225,14 @@ func TestHandler_ProductSearchInvalidInputs(t *testing.T) {
 	}
 }
 
-func handlerSetup(t *testing.T, productsToAdd int) (*chi.Mux, services.ProductCatalogService, repos.ProductRepo) {
+func handlerSetup(t *testing.T, productsToAdd int, isAdmin bool) (*chi.Mux, services.ProductCatalogService, repos.ProductRepo) {
 	logger := pgk.NewLogger()
-	service, productRepo := services.SetupProductCatalogService(t, productsToAdd)
+	productCatalogService, productRepo := services.SetupProductCatalogService(t, productsToAdd)
+	userService := &services.MockUserService{
+		Admin: isAdmin,
+	}
 	r := chi.NewRouter()
-	StartRouterHandlers(r, logger, service)
+	StartRouterHandlers(r, logger, productCatalogService, userService)
 
-	return r, service, productRepo
+	return r, productCatalogService, productRepo
 }

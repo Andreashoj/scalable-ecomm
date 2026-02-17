@@ -32,3 +32,14 @@ func SetupProductCatalogService(t *testing.T, productsToAdd int) (ProductCatalog
 
 	return &productCatalogService{productRepo: prodRepo}, prodRepo
 }
+
+type MockUserService struct {
+	Admin bool
+}
+
+func (u *MockUserService) IsAdmin(accessToken string) bool {
+	if u.Admin {
+		return true
+	}
+	return false
+}
