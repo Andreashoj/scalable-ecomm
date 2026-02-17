@@ -34,13 +34,21 @@ func (p *productRepo) Find(id uuid.UUID) (*domain.Product, error) {
 
 	var product domain.Product
 	for rows.Next() {
-		var category domain.Category
-		err = rows.Scan(&product.ID, &product.Name, &product.Price, &category.ID, &category.Name)
+		var categoryID sql.NullString
+		var categoryName sql.NullString
+		err = rows.Scan(&product.ID, &product.Name, &product.Price, &categoryID, &categoryName)
 		if err != nil {
 			return nil, fmt.Errorf("failed mapping product query: %s", err)
 		}
 
-		product.Categories = append(product.Categories, category)
+		if categoryID.Valid {
+			categoryUUID, _ := uuid.Parse(categoryID.String)
+			category := domain.Category{
+				ID:   categoryUUID,
+				Name: categoryName.String,
+			}
+			product.Categories = append(product.Categories, category)
+		}
 	}
 
 	return &product, nil
@@ -56,7 +64,10 @@ func (p *productRepo) Save(product *domain.Product) error {
 }
 
 func (p *productRepo) GetProducts(productSearch *domain.ProductSearch) ([]domain.Product, error) {
-	rows, err := p.DB.Query(`SELECT id, name, price FROM product ORDER BY $1 $2`, productSearch.Sort.ToSQL(), productSearch.Order.ToSQL())
+	rows, err := p.DB.Query(
+		fmt.Sprintf(`SELECT id, name, price FROM product ORDER BY %s %s`,
+			productSearch.Sort.ToSQL(),
+			productSearch.Order.ToSQL()))
 
 	if err != nil {
 		return nil, fmt.Errorf("failed querying db for products: %s", err)

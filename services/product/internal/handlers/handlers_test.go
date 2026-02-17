@@ -25,7 +25,6 @@ func TestHandler_Product(t *testing.T) {
 
 	product := domain.NewProduct("tester", float64(8291))
 	err := productRepo.Save(product)
-	fmt.Println("no error here?", err)
 	if err != nil {
 		t.Fatalf("failed save here: %v", err)
 	}

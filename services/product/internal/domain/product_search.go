@@ -17,28 +17,39 @@ const (
 	SortDate Sort = "date"
 )
 
-func (s *Sort) IsValid() bool {
-	return true
+func (s Sort) IsValid() bool {
+	switch s {
+	case SortDate:
+		return true
+	default:
+		return false
+	}
 }
 
-func (s *Sort) ToSQL() string {
+func (s Sort) ToSQL() string {
 	return "created_at"
 }
 
-func (s *Order) IsValid() bool {
-	return true
+func (s Order) IsValid() bool {
+	switch s {
+	case OrderAscending:
+		return true
+	case OrderDescending:
+		return true
+	default:
+		return false
+	}
 }
 
-func (s *Order) ToSQL() string {
-	if *s == OrderAscending {
+func (s Order) ToSQL() string {
+	switch s {
+	case OrderAscending:
+		return "ASC"
+	case OrderDescending:
+		return "DESC"
+	default:
 		return "ASC"
 	}
-
-	if *s == OrderDescending {
-		return "DESC"
-	}
-
-	return "ASC"
 }
 
 func NewProductSearch(order, sort string) *ProductSearch {

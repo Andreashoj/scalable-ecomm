@@ -1,7 +1,7 @@
 package services
 
 import (
-	"andreasho/scalable-ecomm/services/product/internal/db"
+	"andreasho/scalable-ecomm/pgk"
 	"andreasho/scalable-ecomm/services/product/internal/db/repos"
 	"andreasho/scalable-ecomm/services/product/internal/domain"
 	"fmt"
@@ -13,7 +13,7 @@ import (
 )
 
 func SetupProductCatalogService(t *testing.T, productsToAdd int) (ProductCatalogService, repos.ProductRepo) {
-	DB := db.SetupTestDB(t)
+	DB := pgk.SetupTestDB(t, "../services/product/internal/db/migrations")
 	prodRepo := repos.NewProductRepo(DB)
 
 	for i := 0; i < productsToAdd; i++ {
@@ -25,7 +25,6 @@ func SetupProductCatalogService(t *testing.T, productsToAdd int) (ProductCatalog
 			CreatedAt:  time.Now().Add(-time.Minute * time.Duration(i)),
 		}
 		err := prodRepo.Save(product)
-		fmt.Println("no fail?")
 		if err != nil {
 			t.Fatalf("failed creating product: :%v", err)
 		}

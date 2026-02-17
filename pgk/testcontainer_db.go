@@ -1,4 +1,4 @@
-package db
+package pgk
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-func SetupTestDB(t *testing.T) *sql.DB {
+func SetupTestDB(t *testing.T, migrationsPath string) *sql.DB {
 	ctx := context.Background()
 
 	req := testcontainers.ContainerRequest{
@@ -57,8 +57,7 @@ func SetupTestDB(t *testing.T) *sql.DB {
 	}
 
 	_, filename, _, _ := runtime.Caller(0)
-	migrationPath := filepath.Join(filepath.Dir(filename), "../db/migrations")
-	fmt.Println(filename)
+	migrationPath := filepath.Join(filepath.Dir(filename), migrationsPath)
 	m, err := migrate.NewWithDatabaseInstance("file://"+migrationPath, "postgres", driver)
 	if err != nil {
 		t.Fatalf("failed to create migrator: %v", err)
