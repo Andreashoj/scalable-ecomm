@@ -6,8 +6,8 @@ type LoginRequestDTO struct {
 }
 
 type LoginResponseDTO struct {
-	AccessToken  string `json:"access_token,omitempty"`
-	RefreshToken string `json:"refresh_token,omitempty"`
+	AccessToken  string `json:"accessToken,omitempty"`
+	RefreshToken string `json:"refreshToken,omitempty"`
 }
 
 type RegisterUserDTO struct {
