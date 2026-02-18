@@ -5,8 +5,8 @@ WORKDIR /app
 COPY . .
 
 RUN go mod download
-RUN go build -o order-service ./services/order/main.go
+RUN go build -o payment-service ./services/payment/main.go
 
 EXPOSE 8080
 
-CMD ["./order"]
+CMD ["./payment-service"]

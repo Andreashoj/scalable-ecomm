@@ -5,8 +5,8 @@ WORKDIR /app
 COPY . .
 
 RUN go mod download
-RUN go build -o product-catalog-service ./services/product-catalog/main.go
+RUN go build -o product-service ./services/product/main.go
 
 EXPOSE 8080
 
-CMD ["./product-catalog-service"]
+CMD ["./product-service"]

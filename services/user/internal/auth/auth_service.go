@@ -3,7 +3,7 @@ package auth
 import (
 	"andreasho/scalable-ecomm/pgk"
 	"andreasho/scalable-ecomm/services/user/internal/db/repos"
-	models2 "andreasho/scalable-ecomm/services/user/internal/domain"
+	"andreasho/scalable-ecomm/services/user/internal/domain"
 	"andreasho/scalable-ecomm/services/user/internal/dto"
 	"errors"
 	"fmt"
@@ -12,7 +12,7 @@ import (
 type AuthService interface {
 	RegisterUser(payload dto.RegisterUserDTO) error
 	Login(payload dto.LoginRequestDTO) (string, string, error)
-	GetUser(userID string) (*models2.User, error)
+	GetUser(userID string) (*domain.User, error)
 	InvalidateRefreshToken(refreshToken string) error
 	RefreshAccessToken(token string) (string, error)
 }
@@ -41,7 +41,7 @@ func (a *authService) RefreshAccessToken(refreshToken string) (string, error) {
 	return accessToken, nil
 }
 
-func (a *authService) GetUser(userID string) (*models2.User, error) {
+func (a *authService) GetUser(userID string) (*domain.User, error) {
 	user, err := a.userRepo.FindByID(userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed finding user with error: %s", err)
@@ -51,7 +51,7 @@ func (a *authService) GetUser(userID string) (*models2.User, error) {
 }
 
 func (a *authService) RegisterUser(payload dto.RegisterUserDTO) error {
-	user, err := models2.NewUser(payload.Name, payload.Email, payload.Password)
+	user, err := domain.NewUser(payload.Name, payload.Email, payload.Password)
 	if err != nil {
 		return fmt.Errorf("failed creating user: %s", err)
 	}
@@ -73,7 +73,7 @@ func (a *authService) Login(payload dto.LoginRequestDTO) (string, string, error)
 
 	validLogin := user.ComparePassword(payload.Password)
 	if validLogin {
-		refreshToken, err := models2.NewRefreshToken(user.GetID())
+		refreshToken, err := domain.NewRefreshToken(user.GetID())
 		if err != nil {
 			return "", "", fmt.Errorf("failed creating refresh token: %s", err)
 		}

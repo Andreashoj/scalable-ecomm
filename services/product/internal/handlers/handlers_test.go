@@ -14,13 +14,6 @@ import (
 	"github.com/go-chi/chi"
 )
 
-// What handlers do we need for produtcs
-// /product [X]
-// / query params => ?sort=>price/date []
-// /product/:id [X]
-// /category?sort=>price/date [X]
-// /product => POST
-
 func TestHandler_CreateProduct(t *testing.T) {
 	r, _, productRepo := handlerSetup(t, 0, true)
 

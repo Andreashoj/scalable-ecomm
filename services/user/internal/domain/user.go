@@ -15,7 +15,7 @@ type User struct {
 	Password  string    `json:"password,omitempty" validate:"required,min=8"`
 	Email     string    `json:"email" validate:"required,email"`
 	Role      Role      `json:"role"`
-	CreatedAt time.Time `json:"role"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 type Role string

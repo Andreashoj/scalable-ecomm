@@ -13,24 +13,13 @@ import (
 )
 
 func main() {
-	// User service MVP
-
-	// Register
-	// => Validation checks [X]
-	// => Duplicate email [X]
-	// => Valid password [X]
-	// => Valid email [X]
-	// Authentication [X]
-	// Check if access token works [X]
-	// Logout []
-	// Refresh []
-
 	DB, err := db.StartDB()
-	defer DB.Close()
 	if err != nil {
 		fmt.Printf("failed creating connection to DB: %s", err)
 		return
 	}
+
+	defer DB.Close()
 
 	r := chi.NewRouter()
 	logger := pgk.NewLogger()
@@ -45,7 +34,7 @@ func main() {
 	// handlers
 	handlers.StartRouteHandler(r, logger, authService)
 
-	if err := http.ListenAndServe(":8080", r); err != nil {
+	if err = http.ListenAndServe(":8080", r); err != nil {
 		fmt.Printf("failed while starting http router: %s", err)
 	}
 }

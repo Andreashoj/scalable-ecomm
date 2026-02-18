@@ -1,7 +1,7 @@
 package auth
 
 import (
-	models2 "andreasho/scalable-ecomm/services/user/internal/domain"
+	domain "andreasho/scalable-ecomm/services/user/internal/domain"
 	"andreasho/scalable-ecomm/services/user/internal/dto"
 	"testing"
 	"time"
@@ -9,7 +9,7 @@ import (
 
 func TestAuthService_LoginSuccess(t *testing.T) {
 	service, userRepo, _ := SetupAuthService()
-	user, _ := models2.NewUser("Andrew", "andrewhoj@gmail.com", "123456789")
+	user, _ := domain.NewUser("Andrew", "andrewhoj@gmail.com", "123456789")
 	userRepo.Save(user)
 
 	payload := dto.LoginRequestDTO{
@@ -30,7 +30,7 @@ func TestAuthService_LoginSuccess(t *testing.T) {
 func TestAuthService_LoginInvalidPassword(t *testing.T) {
 	service, userRepo, _ := SetupAuthService()
 
-	user, _ := models2.NewUser("andrew", "andrewhoj@gmail.com", "123456789")
+	user, _ := domain.NewUser("andrew", "andrewhoj@gmail.com", "123456789")
 	userRepo.Save(user)
 
 	payload := dto.LoginRequestDTO{
@@ -127,7 +127,7 @@ func TestAuthService_RegisterUserInvalidInputs(t *testing.T) {
 func TestAuthService_GetUser(t *testing.T) {
 	service, userRepo, _ := SetupAuthService()
 
-	user, _ := models2.NewUser("andrew", "andrewhoj@gmail.com", "12345678")
+	user, _ := domain.NewUser("andrew", "andrewhoj@gmail.com", "12345678")
 	userRepo.Save(user)
 
 	lookupUser, err := service.GetUser(user.GetID().String())
@@ -153,8 +153,8 @@ func TestAuthService_GetUserNotFound(t *testing.T) {
 func TestAuthService_InvalidateRefreshToken(t *testing.T) {
 	service, _, refreshTokenRepo := SetupAuthService()
 
-	user, _ := models2.NewUser("andrew", "andrewhoj@gmail.com", "12345678")
-	refreshToken, _ := models2.NewRefreshToken(user.GetID())
+	user, _ := domain.NewUser("andrew", "andrewhoj@gmail.com", "12345678")
+	refreshToken, _ := domain.NewRefreshToken(user.GetID())
 	err := refreshTokenRepo.Save(refreshToken)
 
 	if err != nil {
@@ -184,8 +184,8 @@ func TestAuthService_InvalidateRefreshTokenInvalidToken(t *testing.T) {
 func TestAuthService_RefreshAccessToken(t *testing.T) {
 	service, _, refreshTokenRepo := SetupAuthService()
 
-	user, _ := models2.NewUser("andrew", "andrewhoj@gmail.com", "12345678")
-	refreshToken, _ := models2.NewRefreshToken(user.GetID())
+	user, _ := domain.NewUser("andrew", "andrewhoj@gmail.com", "12345678")
+	refreshToken, _ := domain.NewRefreshToken(user.GetID())
 	err := refreshTokenRepo.Save(refreshToken)
 	if err != nil {
 		t.Errorf("didn't expect any errors while saving the token, instead got: %s", err)
@@ -203,15 +203,15 @@ func TestAuthService_RefreshAccessToken(t *testing.T) {
 
 func TestAuthService_RefreshAccessTokenExpiredRefreshToken(t *testing.T) {
 	service, _, refreshTokenRepo := SetupAuthService()
-	user, _ := models2.NewUser("andrew", "andrewhoj@gmail.com", "12345678")
-	token := &models2.RefreshToken{
+	user, _ := domain.NewUser("andrew", "andrewhoj@gmail.com", "12345678")
+	token := &domain.RefreshToken{
 		ID:        "",
 		UserID:    user.ID,
 		Token:     "",
 		CreatedAt: time.Now(),
 		ExpiresAt: time.Now().Add(-time.Hour * 1),
 	}
-	refreshToken, err := models2.CreateToken(token)
+	refreshToken, err := domain.CreateToken(token)
 	token.Token = refreshToken
 
 	err = refreshTokenRepo.Save(token)

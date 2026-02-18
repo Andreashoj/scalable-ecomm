@@ -1,0 +1,23 @@
+meta {
+  name: Create Product
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{host}}/product
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "my-product",
+    "price": 420
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

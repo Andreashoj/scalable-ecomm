@@ -6,6 +6,10 @@ include:
   - services/product/docker-compose.yml
   - services/shopping/docker-compose.yml
 
+networks:
+  app-network:
+    driver: bridge
+
 services:
   caddy:
     image: caddy:latest
@@ -14,15 +18,24 @@ services:
       - "8080:8080"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
+    networks:
+      - app-network
     depends_on:
-      # Exposed API's
       - user-service
+      - product-service
 
   # Services..
   user-service:
     build:
       context: .
       dockerfile: services/user/Dockerfile
+    environment:
+      ENV: "DEV"
+    networks:
+      - app-network
+    depends_on:
+      user-postgres:
+        condition: service_healthy
 
   notification-service:
     build:
@@ -39,10 +52,18 @@ services:
       context: .
       dockerfile: services/payment/Dockerfile
 
-  product-catalog-service:
+  product-service:
     build:
       context: .
       dockerfile: services/product/Dockerfile
+    environment:
+      USER_SERVICE_URL: http://user-service:8080
+      ENV: "DEV"
+    networks:
+      - app-network
+    depends_on:
+      product-postgres:
+        condition: service_healthy
 
   shopping-service:
     build:
@@ -57,6 +78,13 @@ services:
       POSTGRES_DB: user_service
     ports:
       - "5432:5432"
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U admin -d user_service" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   product-postgres:
     image: postgres:15
@@ -65,4 +93,11 @@ services:
       POSTGRES_PASSWORD: secret
       POSTGRES_DB: product_service
     ports:
-      - "5432:5432"
+      - "5433:5432"
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U admin -d product_service" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5

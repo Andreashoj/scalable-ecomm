@@ -1,23 +1,38 @@
 package db
 
 import (
+	"andreasho/scalable-ecomm/pgk"
 	"database/sql"
 	"fmt"
+	"os"
 	"time"
 
 	_ "github.com/lib/pq"
 )
 
 func StartDB() (*sql.DB, error) {
-	//dsn := "user=admin password=secret host=postgres port=5432 dbname=user_service sslmode=disable"
-	dsn := "user=admin password=secret host=localhost port=5432 dbname=user_service sslmode=disable"
+	isDev := os.Getenv("ENV") == "DEV"
+	var dsn string
+	if isDev {
+		dsn = "postgres://admin:secret@user-postgres:5432/user_service?sslmode=disable"
+	} else {
+		dsn = ""
+	}
+
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed creating connection to DB: %s", err)
 	}
 
-	//defer db.Close()
-	db.Ping()
+	if err = db.Ping(); err != nil {
+		return nil, fmt.Errorf("failed pinging DB: %v", err)
+	}
+
+	if isDev {
+		if err = pgk.MigrationsRunner(dsn, "services/user/internal/db/migrations"); err != nil {
+			return nil, fmt.Errorf("failed running migrations: %v", err)
+		}
+	}
 
 	db.SetConnMaxLifetime(time.Minute * 5)
 	db.SetConnMaxIdleTime(time.Minute * 5)

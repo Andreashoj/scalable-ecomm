@@ -3,7 +3,7 @@ package handlers
 import (
 	"andreasho/scalable-ecomm/pgk"
 	"andreasho/scalable-ecomm/services/user/internal/auth"
-	models2 "andreasho/scalable-ecomm/services/user/internal/domain"
+	"andreasho/scalable-ecomm/services/user/internal/domain"
 	"andreasho/scalable-ecomm/services/user/internal/dto"
 	"encoding/json"
 	"fmt"
@@ -22,7 +22,7 @@ func TestHandler_RefreshAccessToken(t *testing.T) {
 
 	pass := "12345678"
 	email := "andrewhoj@gmail.com"
-	user, _ := models2.NewUser("andrew", email, pass)
+	user, _ := domain.NewUser("andrew", email, pass)
 	userRepo.Save(user)
 
 	loginRes := authorizeUser(t, r, email, pass)
@@ -50,10 +50,10 @@ func TestHandler_RefreshExpired(t *testing.T) {
 
 	pass := "12345678"
 	email := "andrewhoj@gmail.com"
-	user, _ := models2.NewUser("andrew", email, pass)
+	user, _ := domain.NewUser("andrew", email, pass)
 	userRepo.Save(user)
 
-	expRefreshToken := &models2.RefreshToken{
+	expRefreshToken := &domain.RefreshToken{
 		ID:        "",
 		UserID:    user.ID,
 		Token:     "",
@@ -61,7 +61,7 @@ func TestHandler_RefreshExpired(t *testing.T) {
 		ExpiresAt: time.Now().Add(-time.Hour * 10),
 	}
 
-	expToken, err := models2.CreateToken(expRefreshToken)
+	expToken, err := domain.CreateToken(expRefreshToken)
 	if err != nil {
 		t.Errorf("didn't expect error on creating expired refresh token, but got: %s", err)
 	}
@@ -110,7 +110,7 @@ func TestHandler_Logout(t *testing.T) {
 
 	pass := "12345678"
 	email := "andrewhoj@gmail.com"
-	user, _ := models2.NewUser("andrew", email, pass)
+	user, _ := domain.NewUser("andrew", email, pass)
 	userRepo.Save(user)
 
 	loginRes := authorizeUser(t, r, email, pass)
@@ -139,7 +139,7 @@ func TestHandler_LogoutInvalidRefreshToken(t *testing.T) {
 
 	pass := "12345678"
 	email := "andrewhoj@gmail.com"
-	user, _ := models2.NewUser("andrew", email, pass)
+	user, _ := domain.NewUser("andrew", email, pass)
 	userRepo.Save(user)
 
 	loginRes := authorizeUser(t, r, email, pass)
@@ -168,7 +168,7 @@ func TestHandler_Me(t *testing.T) {
 
 	pass := "12345678"
 	email := "andrewhoj@gmail.com"
-	user, _ := models2.NewUser("andrew", email, pass)
+	user, _ := domain.NewUser("andrew", email, pass)
 	userRepo.Save(user)
 
 	loginRes := authorizeUser(t, r, email, pass)
@@ -239,7 +239,7 @@ func TestHandler_Login(t *testing.T) {
 	StartRouteHandler(r, pgk.NewLogger(), service)
 
 	pass := "12345678"
-	user, _ := models2.NewUser("andrew", "andrewhoj@gmail.com", pass)
+	user, _ := domain.NewUser("andrew", "andrewhoj@gmail.com", pass)
 	userRepo.Save(user)
 
 	body := fmt.Sprintf(`{"email":"andrewhoj@gmail.com","password":"%s"}`, pass)
@@ -258,7 +258,7 @@ func TestHandler_LoginIncorrectPassword(t *testing.T) {
 	r := chi.NewRouter()
 	StartRouteHandler(r, pgk.NewLogger(), service)
 
-	user, _ := models2.NewUser("andrew", "andrewhoj@gmail.com", "12345678")
+	user, _ := domain.NewUser("andrew", "andrewhoj@gmail.com", "12345678")
 	userRepo.Save(user)
 
 	body := `{"email":"andrewhoj@gmail.com","password":"wrongpassword"}`

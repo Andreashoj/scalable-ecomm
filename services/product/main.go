@@ -23,6 +23,8 @@ func main() {
 		return
 	}
 
+	defer DB.Close()
+
 	// repos
 	productRepo := repos.NewProductRepo(DB)
 

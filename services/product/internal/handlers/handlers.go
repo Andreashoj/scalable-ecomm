@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
@@ -38,15 +37,20 @@ func StartRouterHandlers(r *chi.Mux, logger pgk.Logger, productCatalogService se
 
 func (h *RouterHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	authorizationHeader := r.Header.Get("Authorization")
-	token := strings.TrimPrefix(authorizationHeader, "Bearer ")
+	isAdmin, err := h.userService.IsAdmin(authorizationHeader)
+	if err != nil {
+		h.logger.Error("failed authorization request while trying to create product", "error", err)
+		rest.ErrorResponse(w, 500, errors.BadRequest)
+		return
+	}
 
-	if !h.userService.IsAdmin(token) {
+	if !isAdmin {
 		rest.ErrorResponse(w, 401, errors.Unauthorized)
 		return
 	}
 
 	var payload dto.CreateProductRequest
-	err := json.NewDecoder(r.Body).Decode(&payload)
+	err = json.NewDecoder(r.Body).Decode(&payload)
 	if err != nil {
 		h.logger.Error(fmt.Sprintf("failed decoding payload request: %s", err))
 		rest.ErrorResponse(w, 500, errors.BadRequest)

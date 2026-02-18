@@ -3,27 +3,27 @@ package auth
 import (
 	"andreasho/scalable-ecomm/pgk"
 	"andreasho/scalable-ecomm/services/user/internal/db/repos"
-	models2 "andreasho/scalable-ecomm/services/user/internal/domain"
+	"andreasho/scalable-ecomm/services/user/internal/domain"
 	"fmt"
 )
 
 func SetupAuthService() (AuthService, repos.UserRepo, repos.RefreshTokenRepo) {
 	logger := pgk.NewLogger()
-	userRepo := &InMemoryUserRepo{users: make(map[string]*models2.User)}
-	tokenRepo := &InMemoryRefreshTokenRepo{tokens: make(map[string]*models2.RefreshToken)}
+	userRepo := &InMemoryUserRepo{users: make(map[string]*domain.User)}
+	tokenRepo := &InMemoryRefreshTokenRepo{tokens: make(map[string]*domain.RefreshToken)}
 	return NewAuthService(logger, userRepo, tokenRepo), userRepo, tokenRepo
 }
 
 type InMemoryUserRepo struct {
-	users map[string]*models2.User
+	users map[string]*domain.User
 }
 
-func (u *InMemoryUserRepo) Save(user *models2.User) error {
+func (u *InMemoryUserRepo) Save(user *domain.User) error {
 	u.users[user.ID.String()] = user
 	return nil
 }
 
-func (u *InMemoryUserRepo) FindByEmail(email string) (*models2.User, error) {
+func (u *InMemoryUserRepo) FindByEmail(email string) (*domain.User, error) {
 	for user := range u.users {
 		if u.users[user].Email == email {
 			return u.users[user], nil
@@ -33,7 +33,7 @@ func (u *InMemoryUserRepo) FindByEmail(email string) (*models2.User, error) {
 	return nil, fmt.Errorf("no user with that email")
 }
 
-func (u *InMemoryUserRepo) FindByID(ID string) (*models2.User, error) {
+func (u *InMemoryUserRepo) FindByID(ID string) (*domain.User, error) {
 	user, ok := u.users[ID]
 	if !ok {
 		return nil, fmt.Errorf("no user with that id")
@@ -43,10 +43,10 @@ func (u *InMemoryUserRepo) FindByID(ID string) (*models2.User, error) {
 }
 
 type InMemoryRefreshTokenRepo struct {
-	tokens map[string]*models2.RefreshToken
+	tokens map[string]*domain.RefreshToken
 }
 
-func (r *InMemoryRefreshTokenRepo) Save(token *models2.RefreshToken) error {
+func (r *InMemoryRefreshTokenRepo) Save(token *domain.RefreshToken) error {
 	r.tokens[token.Token] = token
 	return nil
 }
@@ -61,7 +61,7 @@ func (r *InMemoryRefreshTokenRepo) Delete(tokenValue string) error {
 	return nil
 }
 
-func (r *InMemoryRefreshTokenRepo) Find(tokenVal string) (*models2.RefreshToken, error) {
+func (r *InMemoryRefreshTokenRepo) Find(tokenVal string) (*domain.RefreshToken, error) {
 	token, ok := r.tokens[tokenVal]
 	if !ok {
 		return nil, fmt.Errorf("no token with that value")
