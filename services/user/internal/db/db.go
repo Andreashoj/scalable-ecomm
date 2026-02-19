@@ -29,7 +29,7 @@ func StartDB() (*sql.DB, error) {
 	}
 
 	if isDev {
-		if err = pgk.MigrationsRunner(dsn, "services/user/internal/db/migrations"); err != nil {
+		if err = pgk.MigrationsRunner(dsn, "internal/db/migrations"); err != nil {
 			return nil, fmt.Errorf("failed running migrations: %v", err)
 		}
 	}

@@ -10,6 +10,14 @@ get {
   auth: inherit
 }
 
+script:post-response {
+  const response = res.getBody()
+  
+  if (response.length > 0) {
+    bru.setVar("productID",response[0].id)
+  }
+}
+
 settings {
   encodeUrl: true
   timeout: 0

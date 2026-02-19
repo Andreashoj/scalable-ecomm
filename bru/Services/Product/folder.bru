@@ -2,8 +2,16 @@ meta {
   name: Product
 }
 
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
 auth {
-  mode: inherit
+  mode: bearer
+}
+
+auth:bearer {
+  token: 
 }
 
 vars:pre-request {

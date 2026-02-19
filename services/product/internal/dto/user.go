@@ -1,5 +1,5 @@
 package dto
 
 type UserValidationRequest struct {
-	Role string
+	Role string `json:"role"`
 }
