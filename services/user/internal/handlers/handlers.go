@@ -73,6 +73,7 @@ func (h *routeHandler) me(w http.ResponseWriter, r *http.Request) {
 	user, err := h.authService.GetUser(userID)
 
 	if err != nil {
+		h.logger.Error("failed getting user: %v", err)
 		rest.ErrorResponse(w, 500, errors.NotFound)
 		return
 	}

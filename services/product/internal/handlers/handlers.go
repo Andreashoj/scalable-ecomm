@@ -40,7 +40,7 @@ func (h *RouterHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	isAdmin, err := h.userService.IsAdmin(authorizationHeader)
 	if err != nil {
 		h.logger.Error("failed authorization request while trying to create product", "error", err)
-		rest.ErrorResponse(w, 500, errors.BadRequest)
+		rest.ErrorResponse(w, 401, errors.BadRequest)
 		return
 	}
 

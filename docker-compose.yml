@@ -1,11 +1,11 @@
-include:
-  - services/user/docker-compose.yml
-  - services/notification/docker-compose.yml
-  - services/order/docker-compose.yml
-  - services/payment/docker-compose.yml
-  - services/product/docker-compose.yml
-  - services/shopping/docker-compose.yml
-
+#include:
+#  - services/user/docker-compose.yml
+#  - services/notification/docker-compose.yml
+#  - services/order/docker-compose.yml
+#  - services/payment/docker-compose.yml
+#  - services/product/docker-compose.yml
+#  - services/shopping/docker-compose.yml
+#
 networks:
   app-network:
     driver: bridge
