@@ -30,9 +30,55 @@ func StartRouterHandlers(r *chi.Mux, logger pgk.Logger, productCatalogService se
 
 	r.Get("/products", h.GetProducts)
 	r.Get("/product/{id}", h.GetProduct)
+	r.Get("/category", h.GetCategories)
+
+	// TODO: auth middleware
 	r.Post("/product", h.CreateProduct)
+	r.Post("/category", h.CreateCategory)
 
 	return nil
+}
+
+func (h *RouterHandler) GetCategories(w http.ResponseWriter, r *http.Request) {
+	categories, err := h.productCatalogService.GetCategories()
+	if err != nil {
+		rest.ErrorResponse(w, 500, errors.ErrorMessage(err.Error()))
+		return
+	}
+
+	rest.Response(w, categories, 200)
+}
+
+func (h *RouterHandler) CreateCategory(w http.ResponseWriter, r *http.Request) {
+	authorizationHeader := r.Header.Get("Authorization")
+	isAdmin, err := h.userService.IsAdmin(authorizationHeader)
+	if err != nil {
+		h.logger.Error("failed authorization request while trying to create product", "error", err)
+		rest.ErrorResponse(w, 401, errors.BadRequest)
+		return
+	}
+
+	if !isAdmin {
+		rest.ErrorResponse(w, 401, errors.Unauthorized)
+		return
+	}
+
+	var payload dto.CreateCategoryRequest
+	err = json.NewDecoder(r.Body).Decode(&payload)
+	if err != nil {
+		h.logger.Error("failed decoding payload", "error", err)
+		rest.ErrorResponse(w, 500, errors.ErrorMessage(err.Error()))
+		return
+	}
+
+	category, err := h.productCatalogService.CreateCategory(payload)
+	if err != nil {
+		h.logger.Error("failed creating product", "error", err)
+		rest.ErrorResponse(w, 500, errors.ErrorMessage(err.Error()))
+		return
+	}
+
+	rest.Response(w, category, 200)
 }
 
 func (h *RouterHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {

@@ -8,6 +8,9 @@ type Category struct {
 	Products []Product `json:"products,omitempty"`
 }
 
-func NewCategory() *Category {
-	return &Category{}
+func NewCategory(name string) *Category {
+	return &Category{
+		ID:   uuid.New(),
+		Name: name,
+	}
 }

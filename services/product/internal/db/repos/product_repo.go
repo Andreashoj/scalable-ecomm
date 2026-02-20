@@ -2,20 +2,22 @@ package repos
 
 import (
 	"andreasho/scalable-ecomm/services/product/internal/domain"
+	"context"
 	"database/sql"
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 )
 
 type ProductRepo interface {
 	GetProducts(search *domain.ProductSearch) ([]domain.Product, error)
 	Find(id uuid.UUID) (*domain.Product, error)
-	Save(product *domain.Product) error
+	Save(product *domain.Product, categories []uuid.UUID) error
 }
 
 type productRepo struct {
-	DB *sql.DB
+	DB *sqlx.DB
 }
 
 func (p *productRepo) Find(id uuid.UUID) (*domain.Product, error) {
@@ -54,10 +56,26 @@ func (p *productRepo) Find(id uuid.UUID) (*domain.Product, error) {
 	return &product, nil
 }
 
-func (p *productRepo) Save(product *domain.Product) error {
-	_, err := p.DB.Exec(`INSERT INTO product (id, name, price, created_at) VALUES ($1, $2, $3, $4)`, product.ID, product.Name, product.Price, product.CreatedAt)
+func (p *productRepo) Save(product *domain.Product, categories []uuid.UUID) error {
+	ctx := context.Background()
+	tx, err := p.DB.BeginTx(ctx, nil)
+
+	_, err = tx.Exec(`INSERT INTO product (id, name, price, created_at) VALUES ($1, $2, $3, $4)`, product.ID, product.Name, product.Price, product.CreatedAt)
 	if err != nil {
 		return fmt.Errorf("failed creating product: %w", err)
+	}
+
+	var productCategory []domain.ProductCategory
+	for _, category := range categories {
+		productCategory = append(productCategory, domain.ProductCategory{ProductID: product.ID.String(), CategoryID: category.String()})
+	}
+
+	query, args, err := sqlx.In(`INSERT INTO product_category (product_id, category_id) VALUES (?)`, productCategory)
+	query = p.DB.Rebind(query)
+	_, err = tx.Exec(query, args...)
+
+	if err != nil {
+		return fmt.Errorf("failed binding product category query: %v", err)
 	}
 
 	return nil
@@ -85,7 +103,7 @@ func (p *productRepo) GetProducts(productSearch *domain.ProductSearch) ([]domain
 	return products, nil
 }
 
-func NewProductRepo(DB *sql.DB) ProductRepo {
+func NewProductRepo(DB *sqlx.DB) ProductRepo {
 	return &productRepo{
 		DB: DB,
 	}

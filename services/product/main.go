@@ -27,9 +27,10 @@ func main() {
 
 	// repos
 	productRepo := repos.NewProductRepo(DB)
+	categoryRepo := repos.NewCategoryRepo(DB)
 
 	// services
-	authService := services.NewProductCatalogService(productRepo)
+	authService := services.NewProductCatalogService(productRepo, categoryRepo)
 	userService := services.NewUserService()
 
 	handlers.StartRouterHandlers(r, logger, authService, userService)

@@ -7,10 +7,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
-func StartDB() (*sql.DB, error) {
+func StartDB() (*sqlx.DB, error) {
 	isDev := os.Getenv("ENV") == "DEV"
 	var dsn string
 	if isDev {
@@ -38,5 +39,5 @@ func StartDB() (*sql.DB, error) {
 	db.SetMaxOpenConns(5)
 	db.SetMaxIdleConns(5)
 
-	return db, nil
+	return sqlx.NewDb(db, "postgres"), nil
 }
