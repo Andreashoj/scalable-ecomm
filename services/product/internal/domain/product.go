@@ -15,9 +15,8 @@ type Product struct {
 }
 
 type ProductCategory struct {
-	ProductID  string
-	productID  string
-	CategoryID string
+	ProductID  string `db:"product_id"`
+	CategoryID string `db:"category_id"`
 }
 
 func NewProduct(name string, price float64) *Product {

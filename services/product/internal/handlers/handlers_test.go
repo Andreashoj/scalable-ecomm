@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi"
+	"github.com/google/uuid"
 )
 
 func TestHandler_CreateCategory(t *testing.T) {
@@ -37,10 +38,16 @@ func TestHandler_CreateCategory(t *testing.T) {
 	}
 }
 
-func TestHandler_CreateProduct(t *testing.T) {
-	r, _, productRepo, _ := handlerSetup(t, 0, true)
+func TestHandler_CreateProductWithCategory(t *testing.T) {
+	r, _, productRepo, categoryRepo := handlerSetup(t, 0, true)
+	category := domain.NewCategory("my-category")
+	unrelatedCategory := domain.NewCategory("my-category-2")
+	unrelatedProduct := domain.NewProduct("unrelatedProduct", 238)
+	categoryRepo.Save(category, nil)
+	categoryRepo.Save(unrelatedCategory, nil)
+	productRepo.Save(unrelatedProduct, nil)
 
-	body := `{"name": "VHS player", "price": 2819, "categories": ["electronics"]}`
+	body := fmt.Sprintf(`{"name": "VHS player", "price": 2819, "categories": ["%s"]}`, category.ID.String())
 	req := httptest.NewRequest("POST", "/product", strings.NewReader(body))
 	w := httptest.NewRecorder()
 
@@ -59,6 +66,30 @@ func TestHandler_CreateProduct(t *testing.T) {
 	_, err = productRepo.Find(response.ID)
 	if err != nil {
 		t.Errorf("expected to find posted product in DB, but got: %v", err)
+	}
+
+	products, err := productRepo.GetProductsByCategory(category.ID)
+	if err != nil {
+		t.Errorf("did not expect error here: %v", err)
+	}
+
+	if len(products) != 1 {
+		t.Errorf("expected to find 1 products based off the related category, instead got: %v", len(products))
+	}
+}
+
+func TestHandler_CreateProductUnknownCategory(t *testing.T) {
+	r, _, _, _ := handlerSetup(t, 0, true)
+
+	randomUUID := uuid.New()
+	body := fmt.Sprintf(`{"name": "VHS player", "price": 2819, "categories": ["%s"]}`, randomUUID.String())
+	req := httptest.NewRequest("POST", "/product", strings.NewReader(body))
+	w := httptest.NewRecorder()
+
+	r.ServeHTTP(w, req)
+
+	if w.Code != 500 {
+		t.Errorf("expected status 500, instead got %v", w.Code)
 	}
 }
 

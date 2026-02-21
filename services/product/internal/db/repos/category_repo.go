@@ -4,12 +4,13 @@ import (
 	"andreasho/scalable-ecomm/services/product/internal/domain"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
 type CategoryRepo interface {
 	GetAll() ([]domain.Category, error)
-	Save(category *domain.Category) error
+	Save(category *domain.Category, products []uuid.UUID) error
 }
 
 type categoryRepo struct {
@@ -36,13 +37,34 @@ func (c *categoryRepo) GetAll() ([]domain.Category, error) {
 	return categories, nil
 }
 
-func (c *categoryRepo) Save(category *domain.Category) error {
-	_, err := c.DB.Exec(`INSERT INTO category (id, name) VALUES ($1, $2)`, category.ID, category.Name)
+func (c *categoryRepo) Save(category *domain.Category, products []uuid.UUID) error {
+	tx, err := c.DB.Beginx()
+	if err != nil {
+		return fmt.Errorf("failed starting transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	_, err = tx.Exec(`INSERT INTO category (id, name) VALUES ($1, $2)`, category.ID, category.Name)
 	if err != nil {
 		return fmt.Errorf("failed inserting category into db: %v", err)
 	}
 
-	return nil
+	var productCategories []domain.ProductCategory
+	for _, product := range products {
+		productCategories = append(productCategories, domain.ProductCategory{
+			ProductID:  product.String(),
+			CategoryID: category.ID.String(),
+		})
+	}
+
+	for _, pc := range productCategories {
+		_, err = tx.NamedExec(`INSERT INTO product_category (product_id, category_id) VALUES (:product_id, :category_id)`, pc)
+		if err != nil {
+			return fmt.Errorf("failed inserting product_category record: %v", err)
+		}
+	}
+
+	return tx.Commit()
 }
 
 func NewCategoryRepo(DB *sqlx.DB) CategoryRepo {

@@ -33,7 +33,7 @@ func (p *productCatalogService) GetCategories() ([]domain.Category, error) {
 
 func (p *productCatalogService) CreateCategory(payload dto.CreateCategoryRequest) (*domain.Category, error) {
 	category := domain.NewCategory(payload.Name)
-	err := p.categoryRepo.Save(category)
+	err := p.categoryRepo.Save(category, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed saving category: %v", err)
 	}

@@ -2,7 +2,6 @@ package repos
 
 import (
 	"andreasho/scalable-ecomm/services/product/internal/domain"
-	"context"
 	"database/sql"
 	"fmt"
 
@@ -12,12 +11,33 @@ import (
 
 type ProductRepo interface {
 	GetProducts(search *domain.ProductSearch) ([]domain.Product, error)
+	GetProductsByCategory(categoryID uuid.UUID) ([]domain.Product, error)
 	Find(id uuid.UUID) (*domain.Product, error)
 	Save(product *domain.Product, categories []uuid.UUID) error
 }
 
 type productRepo struct {
 	DB *sqlx.DB
+}
+
+func (p *productRepo) GetProductsByCategory(categoryID uuid.UUID) ([]domain.Product, error) {
+	rows, err := p.DB.Query(`SELECT p.id, p.name, p.price FROM product_category pc JOIN product p on p.id = pc.product_id WHERE category_id = $1`, categoryID)
+	if err != nil {
+		return nil, fmt.Errorf("failed querying products: %v", err)
+	}
+
+	var products []domain.Product
+	for rows.Next() {
+		var product domain.Product
+		err = rows.Scan(&product.ID, &product.Name, &product.Price)
+		if err != nil {
+			return nil, fmt.Errorf("failed mapping products: %v", err)
+		}
+
+		products = append(products, product)
+	}
+
+	return products, nil
 }
 
 func (p *productRepo) Find(id uuid.UUID) (*domain.Product, error) {
@@ -57,8 +77,11 @@ func (p *productRepo) Find(id uuid.UUID) (*domain.Product, error) {
 }
 
 func (p *productRepo) Save(product *domain.Product, categories []uuid.UUID) error {
-	ctx := context.Background()
-	tx, err := p.DB.BeginTx(ctx, nil)
+	tx, err := p.DB.Beginx()
+	if err != nil {
+		return fmt.Errorf("failed starting transaction: %v", err)
+	}
+	defer tx.Rollback()
 
 	_, err = tx.Exec(`INSERT INTO product (id, name, price, created_at) VALUES ($1, $2, $3, $4)`, product.ID, product.Name, product.Price, product.CreatedAt)
 	if err != nil {
@@ -70,15 +93,14 @@ func (p *productRepo) Save(product *domain.Product, categories []uuid.UUID) erro
 		productCategory = append(productCategory, domain.ProductCategory{ProductID: product.ID.String(), CategoryID: category.String()})
 	}
 
-	query, args, err := sqlx.In(`INSERT INTO product_category (product_id, category_id) VALUES (?)`, productCategory)
-	query = p.DB.Rebind(query)
-	_, err = tx.Exec(query, args...)
-
-	if err != nil {
-		return fmt.Errorf("failed binding product category query: %v", err)
+	for _, pc := range productCategory {
+		_, err = tx.NamedExec(`INSERT INTO product_category (product_id, category_id) VALUES (:product_id, :category_id)`, pc)
+		if err != nil {
+			return fmt.Errorf("failed inserting product_category record: %v", err)
+		}
 	}
 
-	return nil
+	return tx.Commit()
 }
 
 func (p *productRepo) GetProducts(productSearch *domain.ProductSearch) ([]domain.Product, error) {
