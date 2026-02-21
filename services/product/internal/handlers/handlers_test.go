@@ -15,10 +15,14 @@ import (
 	"github.com/google/uuid"
 )
 
-func TestHandler_CreateCategory(t *testing.T) {
-	r, _, _, categoryRepo := handlerSetup(t, 0, true)
+func TestHandler_CreateCategoryWithProducts(t *testing.T) {
+	r, _, productRepo, categoryRepo := handlerSetup(t, 0, true)
+	product1 := domain.NewProduct("prod-1", 28)
+	product2 := domain.NewProduct("prod-2", 28)
+	productRepo.Save(product1, nil)
+	productRepo.Save(product2, nil)
 
-	body := `{"name": "my-category"}`
+	body := fmt.Sprintf(`{"name": "my-category", "products": ["%s"]}`, product1.ID)
 	req := httptest.NewRequest("POST", "/category", strings.NewReader(body))
 	w := httptest.NewRecorder()
 
@@ -35,6 +39,28 @@ func TestHandler_CreateCategory(t *testing.T) {
 
 	if len(categories) != 1 {
 		t.Errorf("expected categories length to be 1 instead got %v", len(categories))
+	}
+
+	products, err := productRepo.GetProductsByCategory(categories[0].ID)
+	if err != nil {
+		t.Errorf("didn't expect error while getting products: %v", err)
+	}
+
+	if len(products) != 1 {
+		t.Errorf("only expected 1 product, got %v", len(products))
+	}
+}
+
+func TestHandler_CreateCategoryWithUnknownProducts(t *testing.T) {
+	r, _, _, _ := handlerSetup(t, 0, true)
+	body := fmt.Sprintf(`{"name": "my-category", "products": ["%s"]}`, uuid.New())
+	req := httptest.NewRequest("POST", "/category", strings.NewReader(body))
+	w := httptest.NewRecorder()
+
+	r.ServeHTTP(w, req)
+
+	if w.Code != 500 {
+		t.Errorf("expected status code 500 instead got: %v", w.Code)
 	}
 }
 

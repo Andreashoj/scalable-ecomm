@@ -21,7 +21,13 @@ type productRepo struct {
 }
 
 func (p *productRepo) GetProductsByCategory(categoryID uuid.UUID) ([]domain.Product, error) {
-	rows, err := p.DB.Query(`SELECT p.id, p.name, p.price FROM product_category pc JOIN product p on p.id = pc.product_id WHERE category_id = $1`, categoryID)
+	rows, err := p.DB.Query(`
+		SELECT p.id, p.name, p.price
+		FROM product_category pc 
+		JOIN product p 
+		on p.id = pc.product_id 
+		WHERE category_id = $1`, categoryID)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed querying products: %v", err)
 	}
