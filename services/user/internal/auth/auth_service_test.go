@@ -5,10 +5,12 @@ import (
 	"andreasho/scalable-ecomm/services/user/internal/dto"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 func TestAuthService_LoginSuccess(t *testing.T) {
-	service, userRepo, _ := SetupAuthService()
+	service, userRepo, _ := SetupAuthService(t)
 	user, _ := domain.NewUser("Andrew", "andrewhoj@gmail.com", "123456789")
 	userRepo.Save(user)
 
@@ -28,7 +30,7 @@ func TestAuthService_LoginSuccess(t *testing.T) {
 }
 
 func TestAuthService_LoginInvalidPassword(t *testing.T) {
-	service, userRepo, _ := SetupAuthService()
+	service, userRepo, _ := SetupAuthService(t)
 
 	user, _ := domain.NewUser("andrew", "andrewhoj@gmail.com", "123456789")
 	userRepo.Save(user)
@@ -50,7 +52,7 @@ func TestAuthService_LoginInvalidPassword(t *testing.T) {
 }
 
 func TestAuthService_LoginUserNotFound(t *testing.T) {
-	service, _, _ := SetupAuthService()
+	service, _, _ := SetupAuthService(t)
 
 	payload := dto.LoginRequestDTO{
 		Email:    "andrewhoj@gmail.com",
@@ -65,7 +67,7 @@ func TestAuthService_LoginUserNotFound(t *testing.T) {
 }
 
 func TestAuthService_RegisterUser(t *testing.T) {
-	service, _, _ := SetupAuthService()
+	service, _, _ := SetupAuthService(t)
 
 	payload := dto.RegisterUserDTO{
 		Name:     "andreas",
@@ -81,7 +83,7 @@ func TestAuthService_RegisterUser(t *testing.T) {
 }
 
 func TestAuthService_RegisterUserInvalidInputs(t *testing.T) {
-	service, _, _ := SetupAuthService()
+	service, _, _ := SetupAuthService(t)
 
 	tests := []struct {
 		name string
@@ -125,7 +127,7 @@ func TestAuthService_RegisterUserInvalidInputs(t *testing.T) {
 
 // Get user
 func TestAuthService_GetUser(t *testing.T) {
-	service, userRepo, _ := SetupAuthService()
+	service, userRepo, _ := SetupAuthService(t)
 
 	user, _ := domain.NewUser("andrew", "andrewhoj@gmail.com", "12345678")
 	userRepo.Save(user)
@@ -142,7 +144,7 @@ func TestAuthService_GetUser(t *testing.T) {
 }
 
 func TestAuthService_GetUserNotFound(t *testing.T) {
-	service, _, _ := SetupAuthService()
+	service, _, _ := SetupAuthService(t)
 	_, err := service.GetUser("")
 
 	if err == nil {
@@ -151,7 +153,7 @@ func TestAuthService_GetUserNotFound(t *testing.T) {
 }
 
 func TestAuthService_InvalidateRefreshToken(t *testing.T) {
-	service, _, refreshTokenRepo := SetupAuthService()
+	service, _, refreshTokenRepo := SetupAuthService(t)
 
 	user, _ := domain.NewUser("andrew", "andrewhoj@gmail.com", "12345678")
 	refreshToken, _ := domain.NewRefreshToken(user.GetID())
@@ -173,7 +175,7 @@ func TestAuthService_InvalidateRefreshToken(t *testing.T) {
 }
 
 func TestAuthService_InvalidateRefreshTokenInvalidToken(t *testing.T) {
-	service, _, _ := SetupAuthService()
+	service, _, _ := SetupAuthService(t)
 	err := service.InvalidateRefreshToken("")
 
 	if err == nil {
@@ -182,9 +184,9 @@ func TestAuthService_InvalidateRefreshTokenInvalidToken(t *testing.T) {
 }
 
 func TestAuthService_RefreshAccessToken(t *testing.T) {
-	service, _, refreshTokenRepo := SetupAuthService()
-
+	service, userRepo, refreshTokenRepo := SetupAuthService(t)
 	user, _ := domain.NewUser("andrew", "andrewhoj@gmail.com", "12345678")
+	userRepo.Save(user)
 	refreshToken, _ := domain.NewRefreshToken(user.GetID())
 	err := refreshTokenRepo.Save(refreshToken)
 	if err != nil {
@@ -202,10 +204,11 @@ func TestAuthService_RefreshAccessToken(t *testing.T) {
 }
 
 func TestAuthService_RefreshAccessTokenExpiredRefreshToken(t *testing.T) {
-	service, _, refreshTokenRepo := SetupAuthService()
+	service, userRepo, refreshTokenRepo := SetupAuthService(t)
 	user, _ := domain.NewUser("andrew", "andrewhoj@gmail.com", "12345678")
+	userRepo.Save(user)
 	token := &domain.RefreshToken{
-		ID:        "",
+		ID:        uuid.New().String(),
 		UserID:    user.ID,
 		Token:     "",
 		CreatedAt: time.Now(),
@@ -230,7 +233,7 @@ func TestAuthService_RefreshAccessTokenExpiredRefreshToken(t *testing.T) {
 }
 
 func TestAuthService_RefreshAccessTokenNotFound(t *testing.T) {
-	service, _, _ := SetupAuthService()
+	service, _, _ := SetupAuthService(t)
 	_, err := service.RefreshAccessToken("")
 
 	if err == nil {

@@ -5,13 +5,23 @@ import (
 	"andreasho/scalable-ecomm/services/user/internal/db/repos"
 	"andreasho/scalable-ecomm/services/user/internal/domain"
 	"fmt"
+	"testing"
+
+	"github.com/jmoiron/sqlx"
 )
 
-func SetupAuthService() (AuthService, repos.UserRepo, repos.RefreshTokenRepo) {
+func SetupAuthService(t *testing.T) (AuthService, repos.UserRepo, repos.RefreshTokenRepo) {
+	//userRepo := &InMemoryUserRepo{users: make(map[string]*domain.User)}
+	//tokenRepo := &InMemoryRefreshTokenRepo{tokens: make(map[string]*domain.RefreshToken)}
+
+	db := pgk.SetupTestDB(t, "../services/user/internal/db/migrations")
+	DB := sqlx.NewDb(db, "postgres")
+
 	logger := pgk.NewLogger()
-	userRepo := &InMemoryUserRepo{users: make(map[string]*domain.User)}
-	tokenRepo := &InMemoryRefreshTokenRepo{tokens: make(map[string]*domain.RefreshToken)}
-	return NewAuthService(logger, userRepo, tokenRepo), userRepo, tokenRepo
+	userRepo := repos.NewUserRepo(DB)
+	refreshTokenRepo := repos.NewRefreshTokenRepo(DB)
+
+	return NewAuthService(logger, userRepo, refreshTokenRepo), userRepo, refreshTokenRepo
 }
 
 type InMemoryUserRepo struct {

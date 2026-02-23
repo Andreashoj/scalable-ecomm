@@ -7,6 +7,7 @@ import (
 	"andreasho/scalable-ecomm/services/user/internal/dto"
 	"errors"
 	"fmt"
+	"time"
 )
 
 type AuthService interface {
@@ -33,7 +34,12 @@ func (a *authService) RefreshAccessToken(refreshToken string) (string, error) {
 		return "", errors.New("refresh token expired")
 	}
 
-	accessToken, err := createAccessToken(rToken.UserID)
+	user, err := a.userRepo.FindByID(rToken.UserID.String())
+	if err != nil {
+		return "", fmt.Errorf("failed finding user by id: %v", err)
+	}
+
+	accessToken, err := pgk.CreateAccessToken(rToken.UserID, string(user.Role))
 	if err != nil {
 		return "", fmt.Errorf("failed creating access token: %s", err)
 	}
@@ -82,7 +88,7 @@ func (a *authService) Login(payload dto.LoginRequestDTO) (string, string, error)
 			return "", "", fmt.Errorf("failed saving refresh token: %s", err)
 		}
 
-		accessTokenWithClaims, err := createAccessToken(user.GetID())
+		accessTokenWithClaims, err := pgk.CreateAccessToken(user.GetID(), string(user.Role))
 		if err != nil {
 			return "", "", fmt.Errorf("failed creating access token: %s", err)
 		}
@@ -94,7 +100,16 @@ func (a *authService) Login(payload dto.LoginRequestDTO) (string, string, error)
 }
 
 func (a *authService) InvalidateRefreshToken(refreshToken string) error {
-	err := a.refreshTokenRepo.Delete(refreshToken)
+	token, err := a.refreshTokenRepo.Find(refreshToken)
+	if err != nil {
+		return fmt.Errorf("failed finding refresh token from payload: %v", err)
+	}
+
+	if !token.ExpiresAt.After(time.Now()) {
+		return errors.New("token is expired")
+	}
+
+	err = a.refreshTokenRepo.Delete(refreshToken)
 	if err != nil {
 		return fmt.Errorf("failed deleting refresh token: %s", err)
 	}

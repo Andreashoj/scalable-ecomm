@@ -16,7 +16,7 @@ import (
 )
 
 func TestHandler_RefreshAccessToken(t *testing.T) {
-	service, userRepo, _ := auth.SetupAuthService()
+	service, userRepo, _ := auth.SetupAuthService(t)
 	r := chi.NewRouter()
 	StartRouteHandler(r, pgk.NewLogger(), service)
 
@@ -44,7 +44,7 @@ func TestHandler_RefreshAccessToken(t *testing.T) {
 }
 
 func TestHandler_RefreshExpired(t *testing.T) {
-	service, userRepo, refreshTokenRepo := auth.SetupAuthService()
+	service, userRepo, refreshTokenRepo := auth.SetupAuthService(t)
 	r := chi.NewRouter()
 	StartRouteHandler(r, pgk.NewLogger(), service)
 
@@ -84,7 +84,7 @@ func TestHandler_RefreshExpired(t *testing.T) {
 }
 
 func TestHandler_RefreshNotPresent(t *testing.T) {
-	service, _, _ := auth.SetupAuthService()
+	service, _, _ := auth.SetupAuthService(t)
 	r := chi.NewRouter()
 	StartRouteHandler(r, pgk.NewLogger(), service)
 
@@ -104,7 +104,7 @@ func TestHandler_RefreshNotPresent(t *testing.T) {
 }
 
 func TestHandler_Logout(t *testing.T) {
-	service, userRepo, refreshTokenRepo := auth.SetupAuthService()
+	service, userRepo, refreshTokenRepo := auth.SetupAuthService(t)
 	r := chi.NewRouter()
 	StartRouteHandler(r, pgk.NewLogger(), service)
 
@@ -133,7 +133,7 @@ func TestHandler_Logout(t *testing.T) {
 }
 
 func TestHandler_LogoutInvalidRefreshToken(t *testing.T) {
-	service, userRepo, refreshTokenRepo := auth.SetupAuthService()
+	service, userRepo, refreshTokenRepo := auth.SetupAuthService(t)
 	r := chi.NewRouter()
 	StartRouteHandler(r, pgk.NewLogger(), service)
 
@@ -162,7 +162,7 @@ func TestHandler_LogoutInvalidRefreshToken(t *testing.T) {
 }
 
 func TestHandler_Me(t *testing.T) {
-	service, userRepo, _ := auth.SetupAuthService()
+	service, userRepo, _ := auth.SetupAuthService(t)
 	r := chi.NewRouter()
 	StartRouteHandler(r, pgk.NewLogger(), service)
 
@@ -186,7 +186,7 @@ func TestHandler_Me(t *testing.T) {
 }
 
 func TestHandler_MeUnauthorized(t *testing.T) {
-	service, _, _ := auth.SetupAuthService()
+	service, _, _ := auth.SetupAuthService(t)
 	r := chi.NewRouter()
 	StartRouteHandler(r, pgk.NewLogger(), service)
 
@@ -202,7 +202,7 @@ func TestHandler_MeUnauthorized(t *testing.T) {
 }
 
 func TestHandler_RegisterUser(t *testing.T) {
-	service, _, _ := auth.SetupAuthService()
+	service, _, _ := auth.SetupAuthService(t)
 	r := chi.NewRouter()
 	StartRouteHandler(r, pgk.NewLogger(), service)
 
@@ -218,7 +218,7 @@ func TestHandler_RegisterUser(t *testing.T) {
 }
 
 func TestHandler_RegisterUserBadFormat(t *testing.T) {
-	service, _, _ := auth.SetupAuthService()
+	service, _, _ := auth.SetupAuthService(t)
 	r := chi.NewRouter()
 	StartRouteHandler(r, pgk.NewLogger(), service)
 
@@ -234,7 +234,7 @@ func TestHandler_RegisterUserBadFormat(t *testing.T) {
 }
 
 func TestHandler_Login(t *testing.T) {
-	service, userRepo, _ := auth.SetupAuthService()
+	service, userRepo, _ := auth.SetupAuthService(t)
 	r := chi.NewRouter()
 	StartRouteHandler(r, pgk.NewLogger(), service)
 
@@ -254,7 +254,7 @@ func TestHandler_Login(t *testing.T) {
 }
 
 func TestHandler_LoginIncorrectPassword(t *testing.T) {
-	service, userRepo, _ := auth.SetupAuthService()
+	service, userRepo, _ := auth.SetupAuthService(t)
 	r := chi.NewRouter()
 	StartRouteHandler(r, pgk.NewLogger(), service)
 

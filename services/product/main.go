@@ -31,9 +31,8 @@ func main() {
 
 	// services
 	authService := services.NewProductCatalogService(productRepo, categoryRepo)
-	userService := services.NewUserService()
 
-	handlers.StartRouterHandlers(r, logger, authService, userService)
+	handlers.StartRouterHandlers(r, logger, authService)
 
 	http.ListenAndServe(":8080", r)
 }

@@ -39,7 +39,7 @@ func (h *routeHandler) registerRoutes(router *chi.Mux) error {
 		a.Post("/refresh", h.refresh)
 
 		a.Group(func(g chi.Router) {
-			g.Use(auth.AuthMiddleware)
+			g.Use(pgk.IsAuthenticated)
 			g.Post("/logout", h.logout)
 			g.Get("/me", h.me)
 		})
@@ -68,7 +68,7 @@ func (h *routeHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *routeHandler) me(w http.ResponseWriter, r *http.Request) {
-	claims := r.Context().Value("claims").(*auth.AccessToken)
+	claims := r.Context().Value("claims").(*pgk.AccessToken)
 	userID := claims.UserID
 	user, err := h.authService.GetUser(userID)
 

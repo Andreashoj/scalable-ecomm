@@ -1,7 +1,7 @@
-package auth
+package pgk
 
 import (
-	"errors"
+	"andreasho/scalable-ecomm/pgk/errors"
 	"fmt"
 	"time"
 
@@ -10,16 +10,18 @@ import (
 )
 
 type AccessToken struct {
-	UserID string `json:"user_id,omitempty"`
+	UserID string `json:"userId,omitempty"`
+	Role   string `json:"role,omitempty"`
 }
 
-func createAccessToken(userID uuid.UUID) (string, error) {
+func CreateAccessToken(userID uuid.UUID, role string) (string, error) {
 	expirationTime := time.Now().Add(time.Minute * 15)
 	claims := jwt.MapClaims{
 		"iss": "issuer",
 		"exp": expirationTime.Unix(),
 		"data": map[string]string{
-			"user_id": userID.String(),
+			"userId": userID.String(),
+			"role":   role,
 		},
 	}
 
@@ -48,13 +50,18 @@ func parseAccessToken(hashedAccessToken string) (*AccessToken, error) {
 
 	data, ok := claims["data"].(map[string]interface{})
 	if !ok {
-		return nil, errors.New("coulnd't retrieve data from token: %s")
+		return nil, errors.New("couldn't retrieve data from token: %s")
 	}
 
-	userID, ok := data["user_id"].(string)
+	userID, ok := data["userId"].(string)
 	if !ok {
 		return nil, errors.New("user id not found or wrong type")
 	}
 
-	return &AccessToken{UserID: userID}, nil
+	role, ok := data["role"].(string)
+	if !ok {
+		return nil, errors.New("role not found or wrong type")
+	}
+
+	return &AccessToken{UserID: userID, Role: role}, nil
 }

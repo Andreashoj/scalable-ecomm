@@ -1,8 +1,9 @@
 package domain
 
 type ProductSearch struct {
-	Order Order
-	Sort  Sort
+	Order  Order
+	Sort   Sort
+	Filter []string
 }
 
 type Order string
@@ -52,9 +53,10 @@ func (s Order) ToSQL() string {
 	}
 }
 
-func NewProductSearch(order, sort string) *ProductSearch {
+func NewProductSearch(order, sort string, filters []string) *ProductSearch {
 	return &ProductSearch{
-		Order: Order(order),
-		Sort:  Sort(sort),
+		Order:  Order(order),
+		Sort:   Sort(sort),
+		Filter: filters,
 	}
 }

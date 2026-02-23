@@ -2,10 +2,11 @@ package repos
 
 import (
 	"andreasho/scalable-ecomm/services/user/internal/domain"
-	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type UserRepo interface {
@@ -15,7 +16,7 @@ type UserRepo interface {
 }
 
 type userRepo struct {
-	db *sql.DB
+	db *sqlx.DB
 }
 
 func (u *userRepo) FindByID(ID string) (*domain.User, error) {
@@ -54,7 +55,7 @@ func (u *userRepo) Save(user *domain.User) error {
 	return nil
 }
 
-func NewUserRepo(db *sql.DB) UserRepo {
+func NewUserRepo(db *sqlx.DB) UserRepo {
 	return &userRepo{
 		db: db,
 	}

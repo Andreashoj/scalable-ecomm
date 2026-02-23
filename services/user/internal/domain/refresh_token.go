@@ -9,11 +9,11 @@ import (
 )
 
 type RefreshToken struct {
-	ID        string
-	UserID    uuid.UUID
-	Token     string
-	CreatedAt time.Time
-	ExpiresAt time.Time
+	ID        string    `json:"id,omitempty"`
+	UserID    uuid.UUID `json:"userId,omitempty"`
+	Token     string    `json:"token,omitempty"`
+	CreatedAt time.Time `json:"createdAt"`
+	ExpiresAt time.Time `json:"expiresAt"`
 }
 
 func NewRefreshToken(userID uuid.UUID) (*RefreshToken, error) {

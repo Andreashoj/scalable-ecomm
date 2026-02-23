@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
@@ -18,23 +19,23 @@ import (
 type RouterHandler struct {
 	logger                pgk.Logger
 	productCatalogService services.ProductCatalogService
-	userService           services.UserService
 }
 
-func StartRouterHandlers(r *chi.Mux, logger pgk.Logger, productCatalogService services.ProductCatalogService, userService services.UserService) error {
+func StartRouterHandlers(r *chi.Mux, logger pgk.Logger, productCatalogService services.ProductCatalogService) error {
 	h := &RouterHandler{
 		logger:                logger,
 		productCatalogService: productCatalogService,
-		userService:           userService,
 	}
 
 	r.Get("/products", h.GetProducts)
 	r.Get("/product/{id}", h.GetProduct)
 	r.Get("/category", h.GetCategories)
 
-	// TODO: auth middleware
-	r.Post("/product", h.CreateProduct)
-	r.Post("/category", h.CreateCategory)
+	r.Group(func(g chi.Router) {
+		g.Use(pgk.IsAdmin)
+		g.Post("/product", h.CreateProduct)
+		g.Post("/category", h.CreateCategory)
+	})
 
 	return nil
 }
@@ -50,21 +51,8 @@ func (h *RouterHandler) GetCategories(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *RouterHandler) CreateCategory(w http.ResponseWriter, r *http.Request) {
-	authorizationHeader := r.Header.Get("Authorization")
-	isAdmin, err := h.userService.IsAdmin(authorizationHeader)
-	if err != nil {
-		h.logger.Error("failed authorization request while trying to create product", "error", err)
-		rest.ErrorResponse(w, 401, errors.BadRequest)
-		return
-	}
-
-	if !isAdmin {
-		rest.ErrorResponse(w, 401, errors.Unauthorized)
-		return
-	}
-
 	var payload dto.CreateCategoryRequest
-	err = json.NewDecoder(r.Body).Decode(&payload)
+	err := json.NewDecoder(r.Body).Decode(&payload)
 	if err != nil {
 		h.logger.Error("failed decoding payload", "error", err)
 		rest.ErrorResponse(w, 500, errors.ErrorMessage(err.Error()))
@@ -82,21 +70,8 @@ func (h *RouterHandler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *RouterHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
-	authorizationHeader := r.Header.Get("Authorization")
-	isAdmin, err := h.userService.IsAdmin(authorizationHeader)
-	if err != nil {
-		h.logger.Error("failed authorization request while trying to create product", "error", err)
-		rest.ErrorResponse(w, 401, errors.BadRequest)
-		return
-	}
-
-	if !isAdmin {
-		rest.ErrorResponse(w, 401, errors.Unauthorized)
-		return
-	}
-
 	var payload dto.CreateProductRequest
-	err = json.NewDecoder(r.Body).Decode(&payload)
+	err := json.NewDecoder(r.Body).Decode(&payload)
 	if err != nil {
 		h.logger.Error(fmt.Sprintf("failed decoding payload request: %s", err))
 		rest.ErrorResponse(w, 500, errors.BadRequest)
@@ -116,8 +91,10 @@ func (h *RouterHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 func (h *RouterHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
 	order := r.URL.Query().Get("order")
 	sort := r.URL.Query().Get("sort")
+	q := r.URL.Query().Get("q")
+	filters := strings.Split(q, ",")
 
-	productSearch := domain.NewProductSearch(order, sort)
+	productSearch := domain.NewProductSearch(order, sort, filters)
 
 	products, err := h.productCatalogService.GetProducts(productSearch)
 	if err != nil {

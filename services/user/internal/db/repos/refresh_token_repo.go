@@ -2,8 +2,9 @@ package repos
 
 import (
 	"andreasho/scalable-ecomm/services/user/internal/domain"
-	"database/sql"
 	"fmt"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type RefreshTokenRepo interface {
@@ -13,7 +14,7 @@ type RefreshTokenRepo interface {
 }
 
 type refreshTokenRepo struct {
-	db *sql.DB
+	db *sqlx.DB
 }
 
 func (r *refreshTokenRepo) Find(refreshToken string) (*domain.RefreshToken, error) {
@@ -44,7 +45,7 @@ func (r *refreshTokenRepo) Save(token *domain.RefreshToken) error {
 	return nil
 }
 
-func NewRefreshTokenRepo(db *sql.DB) RefreshTokenRepo {
+func NewRefreshTokenRepo(db *sqlx.DB) RefreshTokenRepo {
 	return &refreshTokenRepo{
 		db: db,
 	}

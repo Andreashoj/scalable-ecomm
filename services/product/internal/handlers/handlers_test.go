@@ -16,14 +16,16 @@ import (
 )
 
 func TestHandler_CreateCategoryWithProducts(t *testing.T) {
-	r, _, productRepo, categoryRepo := handlerSetup(t, 0, true)
+	r, _, productRepo, categoryRepo := handlerSetup(t, 0)
 	product1 := domain.NewProduct("prod-1", 28)
 	product2 := domain.NewProduct("prod-2", 28)
 	productRepo.Save(product1, nil)
 	productRepo.Save(product2, nil)
-
+	accessToken, _ := pgk.CreateAccessToken(uuid.New(), "admin")
 	body := fmt.Sprintf(`{"name": "my-category", "products": ["%s"]}`, product1.ID)
 	req := httptest.NewRequest("POST", "/category", strings.NewReader(body))
+
+	req.Header.Set("Authorization", accessToken)
 	w := httptest.NewRecorder()
 
 	r.ServeHTTP(w, req)
@@ -52,9 +54,11 @@ func TestHandler_CreateCategoryWithProducts(t *testing.T) {
 }
 
 func TestHandler_CreateCategoryWithUnknownProducts(t *testing.T) {
-	r, _, _, _ := handlerSetup(t, 0, true)
+	r, _, _, _ := handlerSetup(t, 0)
 	body := fmt.Sprintf(`{"name": "my-category", "products": ["%s"]}`, uuid.New())
+	accessToken, _ := pgk.CreateAccessToken(uuid.New(), "admin")
 	req := httptest.NewRequest("POST", "/category", strings.NewReader(body))
+	req.Header.Set("Authorization", accessToken)
 	w := httptest.NewRecorder()
 
 	r.ServeHTTP(w, req)
@@ -65,7 +69,8 @@ func TestHandler_CreateCategoryWithUnknownProducts(t *testing.T) {
 }
 
 func TestHandler_CreateProductWithCategory(t *testing.T) {
-	r, _, productRepo, categoryRepo := handlerSetup(t, 0, true)
+	r, _, productRepo, categoryRepo := handlerSetup(t, 0)
+	accessToken, _ := pgk.CreateAccessToken(uuid.New(), "admin")
 	category := domain.NewCategory("my-category")
 	unrelatedCategory := domain.NewCategory("my-category-2")
 	unrelatedProduct := domain.NewProduct("unrelatedProduct", 238)
@@ -75,6 +80,7 @@ func TestHandler_CreateProductWithCategory(t *testing.T) {
 
 	body := fmt.Sprintf(`{"name": "VHS player", "price": 2819, "categories": ["%s"]}`, category.ID.String())
 	req := httptest.NewRequest("POST", "/product", strings.NewReader(body))
+	req.Header.Set("Authorization", accessToken)
 	w := httptest.NewRecorder()
 
 	r.ServeHTTP(w, req)
@@ -105,11 +111,13 @@ func TestHandler_CreateProductWithCategory(t *testing.T) {
 }
 
 func TestHandler_CreateProductUnknownCategory(t *testing.T) {
-	r, _, _, _ := handlerSetup(t, 0, true)
+	r, _, _, _ := handlerSetup(t, 0)
+	accessToken, _ := pgk.CreateAccessToken(uuid.New(), "admin")
 
 	randomUUID := uuid.New()
 	body := fmt.Sprintf(`{"name": "VHS player", "price": 2819, "categories": ["%s"]}`, randomUUID.String())
 	req := httptest.NewRequest("POST", "/product", strings.NewReader(body))
+	req.Header.Set("Authorization", accessToken)
 	w := httptest.NewRecorder()
 
 	r.ServeHTTP(w, req)
@@ -120,7 +128,7 @@ func TestHandler_CreateProductUnknownCategory(t *testing.T) {
 }
 
 func TestHandler_CreateProductUnauthorized(t *testing.T) {
-	r, _, _, _ := handlerSetup(t, 0, false)
+	r, _, _, _ := handlerSetup(t, 0)
 
 	body := `{"name": "VHS player", "price": 2819}`
 	req := httptest.NewRequest("POST", "/product", strings.NewReader(body))
@@ -134,7 +142,7 @@ func TestHandler_CreateProductUnauthorized(t *testing.T) {
 }
 
 func TestHandler_Product(t *testing.T) {
-	r, _, productRepo, _ := handlerSetup(t, 0, false)
+	r, _, productRepo, _ := handlerSetup(t, 0)
 
 	product := domain.NewProduct("tester", float64(8291))
 	err := productRepo.Save(product, nil)
@@ -163,7 +171,7 @@ func TestHandler_Product(t *testing.T) {
 }
 
 func TestHandler_ProductNotFound(t *testing.T) {
-	r, _, _, _ := handlerSetup(t, 0, false)
+	r, _, _, _ := handlerSetup(t, 0)
 
 	req := httptest.NewRequest("GET", fmt.Sprintf("/product/random-param"), nil)
 	w := httptest.NewRecorder()
@@ -177,7 +185,7 @@ func TestHandler_ProductNotFound(t *testing.T) {
 
 func TestHandler_Products(t *testing.T) {
 	productAmount := 5
-	r, _, _, _ := handlerSetup(t, productAmount, false)
+	r, _, _, _ := handlerSetup(t, productAmount)
 	req := httptest.NewRequest("GET", "/products", nil)
 	w := httptest.NewRecorder()
 
@@ -200,7 +208,7 @@ func TestHandler_Products(t *testing.T) {
 
 func TestHandler_ProductsNotFound(t *testing.T) {
 	productAmount := 0
-	r, _, _, _ := handlerSetup(t, productAmount, false)
+	r, _, _, _ := handlerSetup(t, productAmount)
 	req := httptest.NewRequest("GET", "/products", nil)
 	w := httptest.NewRecorder()
 
@@ -222,8 +230,8 @@ func TestHandler_ProductsNotFound(t *testing.T) {
 }
 
 func TestHandler_ProductsDateAscending(t *testing.T) {
-	r, _, _, _ := handlerSetup(t, 50, false)
-	req := httptest.NewRequest("GET", "/products?sort=date&order=ascending", nil)
+	r, _, _, _ := handlerSetup(t, 50)
+	req := httptest.NewRequest("GET", "/products?sort=date&order=ascending&q=electronics", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
@@ -252,7 +260,7 @@ func TestHandler_ProductsDateAscending(t *testing.T) {
 }
 
 func TestHandler_ProductsDateDescending(t *testing.T) {
-	r, _, _, _ := handlerSetup(t, 50, false)
+	r, _, _, _ := handlerSetup(t, 50)
 	req := httptest.NewRequest("GET", "/products?sort=date&order=descending", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
@@ -282,7 +290,7 @@ func TestHandler_ProductsDateDescending(t *testing.T) {
 }
 
 func TestHandler_ProductSearchInvalidInputs(t *testing.T) {
-	r, _, _, _ := handlerSetup(t, 50, false)
+	r, _, _, _ := handlerSetup(t, 50)
 	req := httptest.NewRequest("GET", "/products?sort=invalidsortingoption&order=invalidngorderopion", nil) // ascending is the default option if order option validation fails
 	w := httptest.NewRecorder()
 
@@ -312,14 +320,11 @@ func TestHandler_ProductSearchInvalidInputs(t *testing.T) {
 	}
 }
 
-func handlerSetup(t *testing.T, productsToAdd int, isAdmin bool) (*chi.Mux, services.ProductCatalogService, repos.ProductRepo, repos.CategoryRepo) {
+func handlerSetup(t *testing.T, productsToAdd int) (*chi.Mux, services.ProductCatalogService, repos.ProductRepo, repos.CategoryRepo) {
 	logger := pgk.NewLogger()
 	productCatalogService, productRepo, categoryRepo := services.SetupProductCatalogService(t, productsToAdd)
-	userService := &services.MockUserService{
-		Admin: isAdmin,
-	}
 	r := chi.NewRouter()
-	StartRouterHandlers(r, logger, productCatalogService, userService)
+	StartRouterHandlers(r, logger, productCatalogService)
 
 	return r, productCatalogService, productRepo, categoryRepo
 }
