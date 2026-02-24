@@ -92,7 +92,10 @@ func (h *RouterHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
 	order := r.URL.Query().Get("order")
 	sort := r.URL.Query().Get("sort")
 	q := r.URL.Query().Get("q")
-	filters := strings.Split(q, ",")
+	var filters []string
+	if q != "" {
+		filters = strings.Split(q, ",")
+	}
 
 	productSearch := domain.NewProductSearch(order, sort, filters)
 

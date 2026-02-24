@@ -14,3 +14,13 @@ func NewCategory(name string) *Category {
 		Name: name,
 	}
 }
+
+func (c *Category) AddProduct(product *Product) {
+	c.Products = append(c.Products, *product)
+}
+
+func (c *Category) AddProducts(products []Product) {
+	for _, product := range products {
+		c.Products = append(c.Products, product)
+	}
+}

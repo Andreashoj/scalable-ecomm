@@ -229,9 +229,52 @@ func TestHandler_ProductsNotFound(t *testing.T) {
 	}
 }
 
+func TestHandler_ProductsWithCategoryFilter(t *testing.T) {
+	r, _, productRepo, categoryRepo := handlerSetup(t, 50)
+	product1 := domain.NewProduct("product-1", 281)
+	err := productRepo.Save(product1, nil)
+	if err != nil {
+		t.Errorf("failed saving product: %v", err)
+	}
+
+	category := domain.NewCategory("electronics")
+	err = categoryRepo.Save(category, []uuid.UUID{product1.ID})
+	if err != nil {
+		t.Errorf("failed saving category: %v", err)
+	}
+
+	req := httptest.NewRequest("GET", fmt.Sprintf("/products?sort=date&order=ascending&q=%s", category.ID), nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != 200 {
+		t.Errorf("expected status code 200, got %v instead", w.Code)
+	}
+
+	var response []domain.Product
+	err = json.Unmarshal([]byte(w.Body.String()), &response)
+	if err != nil {
+		t.Errorf("failed decoding body response with err: %s", err)
+	}
+
+	for _, p := range response {
+		hasMatchingFilterValue := false
+		for _, c := range p.Categories {
+			if c.Name == category.Name {
+				hasMatchingFilterValue = true
+				break
+			}
+		}
+
+		if !hasMatchingFilterValue {
+			t.Errorf("expected product to have matching category value")
+		}
+	}
+}
+
 func TestHandler_ProductsDateAscending(t *testing.T) {
 	r, _, _, _ := handlerSetup(t, 50)
-	req := httptest.NewRequest("GET", "/products?sort=date&order=ascending&q=electronics", nil)
+	req := httptest.NewRequest("GET", "/products?sort=date&order=ascending", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 

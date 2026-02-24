@@ -153,9 +153,9 @@ func TestAuthService_GetUserNotFound(t *testing.T) {
 }
 
 func TestAuthService_InvalidateRefreshToken(t *testing.T) {
-	service, _, refreshTokenRepo := SetupAuthService(t)
-
+	service, userRepo, refreshTokenRepo := SetupAuthService(t)
 	user, _ := domain.NewUser("andrew", "andrewhoj@gmail.com", "12345678")
+	userRepo.Save(user)
 	refreshToken, _ := domain.NewRefreshToken(user.GetID())
 	err := refreshTokenRepo.Save(refreshToken)
 

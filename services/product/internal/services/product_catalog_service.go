@@ -71,12 +71,7 @@ func (p *productCatalogService) GetProducts(productSearch *domain.ProductSearch)
 		productSearch.Sort = domain.SortDate
 	}
 
-	products, err := p.productRepo.GetProducts(productSearch)
-	if err != nil {
-		return nil, fmt.Errorf("failed getting products from db: %v", err)
-	}
-
-	return products, nil
+	return p.productRepo.GetProducts(productSearch)
 }
 
 func NewProductCatalogService(productRepo repos.ProductRepo, categoryRepo repos.CategoryRepo) ProductCatalogService {

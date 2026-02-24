@@ -11,7 +11,7 @@ type Product struct {
 	Name       string     `json:"name,omitempty"`
 	Price      float64    `json:"price,omitempty"`
 	Categories []Category `json:"categories,omitempty"`
-	CreatedAt  time.Time  `json:"createdAt"`
+	CreatedAt  time.Time  `db:"created_at" json:"createdAt"`
 }
 
 type ProductCategory struct {

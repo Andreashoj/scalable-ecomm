@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
@@ -110,21 +111,58 @@ func (p *productRepo) Save(product *domain.Product, categories []uuid.UUID) erro
 }
 
 func (p *productRepo) GetProducts(productSearch *domain.ProductSearch) ([]domain.Product, error) {
-	rows, err := p.DB.Query(
-		fmt.Sprintf(`SELECT id, name, price, created_at FROM product ORDER BY %s %s`,
-			productSearch.Sort.ToSQL(),
-			productSearch.Order.ToSQL()))
+	var rows []productCategoryRow
+	var q sq.SelectBuilder
+	if len(productSearch.Filter) > 0 {
+		q = sq.Select("p.id AS product_id, p.name AS product_name, p.price, c.id AS category_id, c.name AS category_name").
+			From("category c").
+			LeftJoin("product_category pc ON pc.category_id = c.id").
+			LeftJoin("product p ON p.id = pc.product_id").
+			Where(sq.Eq{"c.id": productSearch.Filter}).
+			OrderBy(fmt.Sprintf("%s %s", productSearch.Sort.ToSQL(), productSearch.Order.ToSQL()))
+	} else {
+		q = sq.Select("p.id AS product_id, p.name AS product_name, p.price, c.id AS category_id, c.name AS category_name").
+			From("product p").
+			LeftJoin("product_category pc ON pc.product_id = p.id").
+			LeftJoin("category c ON c.id = pc.category_id").
+			OrderBy(fmt.Sprintf("%s %s", productSearch.Sort.ToSQL(), productSearch.Order.ToSQL()))
+	}
 
+	query, args, err := q.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("failed converting query into sql: %v", err)
+	}
+
+	err = p.DB.Select(&rows, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed querying db for products: %w", err)
 	}
 
-	products := make([]domain.Product, 0)
-	for rows.Next() {
-		var product domain.Product
-		if err = rows.Scan(&product.ID, &product.Name, &product.Price, &product.CreatedAt); err != nil {
-			return nil, fmt.Errorf("failed scanning product: %w", err)
+	var productMap = make(map[uuid.UUID]domain.Product)
+	for _, row := range rows {
+		product, exists := productMap[row.ProductID]
+		if !exists {
+			productMap[row.ProductID] = domain.Product{
+				ID:    row.ProductID,
+				Name:  row.ProductName,
+				Price: row.ProductPrice,
+			}
 		}
+
+		var category domain.Category
+		if row.CategoryID.Valid {
+			category = domain.Category{
+				ID:   row.CategoryID.UUID,
+				Name: row.CategoryName.String,
+			}
+		}
+
+		product.Categories = append(product.Categories, category)
+		productMap[row.ProductID] = product
+	}
+
+	var products []domain.Product
+	for _, product := range productMap {
 		products = append(products, product)
 	}
 
@@ -132,7 +170,16 @@ func (p *productRepo) GetProducts(productSearch *domain.ProductSearch) ([]domain
 }
 
 func NewProductRepo(DB *sqlx.DB) ProductRepo {
+	sq.StatementBuilder = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 	return &productRepo{
 		DB: DB,
 	}
+}
+
+type productCategoryRow struct {
+	ProductID    uuid.UUID      `db:"product_id"`
+	ProductName  string         `db:"product_name"`
+	ProductPrice float64        `db:"price"`
+	CategoryID   uuid.NullUUID  `db:"category_id"`
+	CategoryName sql.NullString `db:"category_name"`
 }
