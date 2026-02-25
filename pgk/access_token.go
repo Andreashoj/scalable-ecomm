@@ -3,6 +3,7 @@ package pgk
 import (
 	"andreasho/scalable-ecomm/pgk/errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -26,7 +27,7 @@ func CreateAccessToken(userID uuid.UUID, role string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte("secret")) // TODO: Update with actual secret
+	tokenString, err := token.SignedString([]byte(os.Getenv("ACCESS_TOKEN_SECRET"))) // TODO: Update with actual secret
 	if err != nil {
 		return "", fmt.Errorf("failed signing access token: %s", err)
 	}
@@ -36,7 +37,7 @@ func CreateAccessToken(userID uuid.UUID, role string) (string, error) {
 
 func parseAccessToken(hashedAccessToken string) (*AccessToken, error) {
 	token, err := jwt.Parse(hashedAccessToken, func(token *jwt.Token) (interface{}, error) {
-		return []byte("secret"), nil
+		return []byte(os.Getenv("ACCESS_TOKEN_SECRET")), nil
 	})
 
 	if err != nil || !token.Valid {

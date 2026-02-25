@@ -43,13 +43,18 @@ func (h *routeHandler) registerRoutes(router *chi.Mux) error {
 			g.Post("/logout", h.logout)
 			g.Get("/me", h.me)
 		})
+
+		a.Group(func(g chi.Router) {
+			g.Use(pgk.IsAdmin)
+			g.Patch("/me", h.updateMe)
+		})
 	})
 
 	return nil
 }
 
 func (h *routeHandler) registerUser(w http.ResponseWriter, r *http.Request) {
-	var payload dto.RegisterUserDTO
+	var payload dto.RegisterUser
 	err := json.NewDecoder(r.Body).Decode(&payload)
 	if err != nil {
 		h.logger.Error("failed decoding payload with error", "error", err)
@@ -67,6 +72,25 @@ func (h *routeHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	rest.Response(w, "", 201) // TODO: empty responses
 }
 
+func (h *routeHandler) updateMe(w http.ResponseWriter, r *http.Request) {
+	var payload dto.UpdateUserRequest
+	err := json.NewDecoder(r.Body).Decode(&payload)
+	if err != nil {
+		h.logger.Error("failed decoding update user request payload", "error", err)
+		rest.ErrorResponse(w, 500, errors.ErrorMessage(err.Error()))
+		return
+	}
+
+	user, err := h.authService.UpdateUser(payload)
+	if err != nil {
+		h.logger.Error("failed updating user", "error", err)
+		rest.ErrorResponse(w, 500, errors.ErrorMessage(err.Error()))
+		return
+	}
+
+	rest.Response(w, user, 200)
+}
+
 func (h *routeHandler) me(w http.ResponseWriter, r *http.Request) {
 	claims := r.Context().Value("claims").(*pgk.AccessToken)
 	userID := claims.UserID
@@ -82,7 +106,7 @@ func (h *routeHandler) me(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *routeHandler) login(w http.ResponseWriter, r *http.Request) {
-	var payload dto.LoginRequestDTO
+	var payload dto.LoginRequest
 	err := json.NewDecoder(r.Body).Decode(&payload)
 	if err != nil {
 		h.logger.Error("Failed decoding login payload", "error", err)
@@ -97,7 +121,7 @@ func (h *routeHandler) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := dto.LoginResponseDTO{
+	response := dto.LoginResponse{
 		RefreshToken: refreshToken,
 		AccessToken:  accessToken,
 	}
@@ -106,7 +130,7 @@ func (h *routeHandler) login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *routeHandler) logout(w http.ResponseWriter, r *http.Request) {
-	var payload dto.LogoutRequestDTO
+	var payload dto.LogoutRequest
 	err := json.NewDecoder(r.Body).Decode(&payload)
 	if err != nil {
 		rest.ErrorResponse(w, 500, errors.BadRequest)
@@ -124,7 +148,7 @@ func (h *routeHandler) logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *routeHandler) refresh(w http.ResponseWriter, r *http.Request) {
-	var payload dto.RefreshRequestDTO
+	var payload dto.RefreshRequest
 	err := json.NewDecoder(r.Body).Decode(&payload)
 	if err != nil {
 		h.logger.Error("failed decoding refresh request", "error", err)
@@ -139,7 +163,7 @@ func (h *routeHandler) refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := dto.RefreshResponseDTO{
+	response := dto.RefreshResponse{
 		AccessToken: accessToken,
 	}
 

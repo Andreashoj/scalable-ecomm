@@ -75,7 +75,7 @@ func TestUser_IsValidInvalidInputs(t *testing.T) {
 
 func TestUser_ComparePassword(t *testing.T) {
 	pass := "123456789"
-	hash, err := createHashedPassword(pass)
+	hash, err := CreateHashedPassword(pass)
 	if err != nil {
 		t.Errorf("didnt expect creation of hashed password to return error: %s", err)
 	}
@@ -95,7 +95,7 @@ func TestUser_ComparePassword(t *testing.T) {
 }
 
 func TestUser_ComparePasswordIncorrectMatch(t *testing.T) {
-	hash, err := createHashedPassword("12345678")
+	hash, err := CreateHashedPassword("12345678")
 	if err != nil {
 		t.Errorf("didnt expect creation of hashed password to return error: %s", err)
 	}

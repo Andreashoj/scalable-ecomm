@@ -40,7 +40,7 @@ func NewUser(name, email, password string) (*User, error) {
 		return nil, fmt.Errorf("invalid inputs for user: %s", err)
 	}
 
-	hashedPass, err := createHashedPassword(password)
+	hashedPass, err := CreateHashedPassword(password)
 	if err != nil {
 		return nil, fmt.Errorf("failed creating hashed pass: %s", err)
 	}
@@ -67,7 +67,7 @@ func (u *User) ComparePassword(password string) bool {
 	return err == nil
 }
 
-func createHashedPassword(password string) (string, error) {
+func CreateHashedPassword(password string) (string, error) {
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", fmt.Errorf("failed generating hashed password: %s", err)

@@ -14,7 +14,7 @@ func TestAuthService_LoginSuccess(t *testing.T) {
 	user, _ := domain.NewUser("Andrew", "andrewhoj@gmail.com", "123456789")
 	userRepo.Save(user)
 
-	payload := dto.LoginRequestDTO{
+	payload := dto.LoginRequest{
 		Email:    "andrewhoj@gmail.com",
 		Password: "123456789",
 	}
@@ -35,7 +35,7 @@ func TestAuthService_LoginInvalidPassword(t *testing.T) {
 	user, _ := domain.NewUser("andrew", "andrewhoj@gmail.com", "123456789")
 	userRepo.Save(user)
 
-	payload := dto.LoginRequestDTO{
+	payload := dto.LoginRequest{
 		Email:    "andrewhoj@gmail.com",
 		Password: "wrongpassword",
 	}
@@ -54,7 +54,7 @@ func TestAuthService_LoginInvalidPassword(t *testing.T) {
 func TestAuthService_LoginUserNotFound(t *testing.T) {
 	service, _, _ := SetupAuthService(t)
 
-	payload := dto.LoginRequestDTO{
+	payload := dto.LoginRequest{
 		Email:    "andrewhoj@gmail.com",
 		Password: "123456789",
 	}
@@ -69,7 +69,7 @@ func TestAuthService_LoginUserNotFound(t *testing.T) {
 func TestAuthService_RegisterUser(t *testing.T) {
 	service, _, _ := SetupAuthService(t)
 
-	payload := dto.RegisterUserDTO{
+	payload := dto.RegisterUser{
 		Name:     "andreas",
 		Email:    "andrewhoj@gmail.com",
 		Password: "123456789",
@@ -87,11 +87,11 @@ func TestAuthService_RegisterUserInvalidInputs(t *testing.T) {
 
 	tests := []struct {
 		name string
-		test dto.RegisterUserDTO
+		test dto.RegisterUser
 	}{
 		{
 			name: "missing email",
-			test: dto.RegisterUserDTO{
+			test: dto.RegisterUser{
 				Name:     "andreas",
 				Email:    "",
 				Password: "123456789",
@@ -99,7 +99,7 @@ func TestAuthService_RegisterUserInvalidInputs(t *testing.T) {
 		},
 		{
 			name: "missing password",
-			test: dto.RegisterUserDTO{
+			test: dto.RegisterUser{
 				Name:     "andreas",
 				Email:    "andrewhoj@gmail.com",
 				Password: "",
@@ -107,7 +107,7 @@ func TestAuthService_RegisterUserInvalidInputs(t *testing.T) {
 		},
 		{
 			name: "missing email and password",
-			test: dto.RegisterUserDTO{
+			test: dto.RegisterUser{
 				Name:     "andreas",
 				Email:    "",
 				Password: "",

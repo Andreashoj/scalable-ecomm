@@ -13,7 +13,59 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
+	"github.com/google/uuid"
 )
+
+// Create endpoint to update user, should be behind admin guard
+// Seed Admin user
+
+func TestHandler_UpdateUser(t *testing.T) {
+	service, userRepo, _ := auth.SetupAuthService(t)
+	r := chi.NewRouter()
+	StartRouteHandler(r, pgk.NewLogger(), service)
+
+	password := "123456789"
+	hashedPass, err := domain.CreateHashedPassword(password)
+	if err != nil {
+		t.Error(err)
+	}
+
+	user := &domain.User{
+		ID:        uuid.New(),
+		Name:      "tester",
+		Password:  hashedPass,
+		Email:     "tester@gmail.com",
+		Role:      domain.Admin,
+		CreatedAt: time.Now(),
+	}
+
+	err = userRepo.Save(user)
+	if err != nil {
+		t.Error(err)
+	}
+	loginRes := authorizeUser(t, r, user.Email, password)
+
+	updatedName, updatedEmail := "updatedUser", "updated@gmail.com"
+	payload := fmt.Sprintf(`{"userId": "%s","name": "%s", "email": "%s", "password": "updated-secret", "role": "admin"}`, user.ID, updatedName, updatedEmail)
+	req := httptest.NewRequest("PATCH", "/auth/me", strings.NewReader(payload))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", loginRes.AccessToken))
+	w := httptest.NewRecorder()
+
+	r.ServeHTTP(w, req)
+	if w.Code != 200 {
+		t.Errorf("expected status code 200, got %v", w.Code)
+	}
+
+	var res dto.UpdateUserResponse
+	err = json.Unmarshal([]byte(w.Body.String()), &res)
+	if err != nil {
+		t.Errorf("failed decoding response: %v", err)
+	}
+
+	if res.Name != updatedName && res.Email != updatedEmail {
+		t.Errorf("expected response to include updated email and name, instead got: %v and %v", res.Name, res.Email)
+	}
+}
 
 func TestHandler_RefreshAccessToken(t *testing.T) {
 	service, userRepo, _ := auth.SetupAuthService(t)
@@ -272,7 +324,7 @@ func TestHandler_LoginIncorrectPassword(t *testing.T) {
 	}
 }
 
-func authorizeUser(t *testing.T, router *chi.Mux, email, pass string) *dto.LoginResponseDTO {
+func authorizeUser(t *testing.T, router *chi.Mux, email, pass string) *dto.LoginResponse {
 	body := fmt.Sprintf(`{"email":"%s","password":"%s"}`, email, pass)
 	req := httptest.NewRequest("POST", "/auth/login", strings.NewReader(body))
 	w := httptest.NewRecorder()
@@ -283,7 +335,7 @@ func authorizeUser(t *testing.T, router *chi.Mux, email, pass string) *dto.Login
 		t.Errorf("expected 200, instead got: %v", w.Code)
 	}
 
-	var res dto.LoginResponseDTO
+	var res dto.LoginResponse
 	err := json.Unmarshal([]byte(w.Body.String()), &res)
 
 	if err != nil {

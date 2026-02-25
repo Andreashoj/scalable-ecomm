@@ -6,17 +6,34 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/jmoiron/sqlx"
 )
 
 type UserRepo interface {
 	Save(user *domain.User) error
+	Update(user *domain.User) error
 	FindByEmail(email string) (*domain.User, error)
 	FindByID(ID string) (*domain.User, error)
 }
 
 type userRepo struct {
 	db *sqlx.DB
+}
+
+func (u *userRepo) Update(user *domain.User) error {
+	_, err := squirrel.
+		Update("users").
+		Set("name", user.Name).
+		Set("email", user.Email).
+		Set("password", user.Password).
+		Set("role", user.Role).
+		Where(squirrel.Eq{"id": user.ID}).
+		PlaceholderFormat(squirrel.Dollar).
+		RunWith(u.db).
+		Exec()
+
+	return err
 }
 
 func (u *userRepo) FindByID(ID string) (*domain.User, error) {

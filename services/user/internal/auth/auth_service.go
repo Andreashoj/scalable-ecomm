@@ -11,8 +11,9 @@ import (
 )
 
 type AuthService interface {
-	RegisterUser(payload dto.RegisterUserDTO) error
-	Login(payload dto.LoginRequestDTO) (string, string, error)
+	UpdateUser(payload dto.UpdateUserRequest) (*domain.User, error)
+	RegisterUser(payload dto.RegisterUser) error
+	Login(payload dto.LoginRequest) (string, string, error)
 	GetUser(userID string) (*domain.User, error)
 	InvalidateRefreshToken(refreshToken string) error
 	RefreshAccessToken(token string) (string, error)
@@ -22,6 +23,31 @@ type authService struct {
 	userRepo         repos.UserRepo
 	refreshTokenRepo repos.RefreshTokenRepo
 	logger           pgk.Logger
+}
+
+func (a *authService) UpdateUser(payload dto.UpdateUserRequest) (*domain.User, error) {
+	user, err := a.GetUser(payload.UserID.String())
+	if err != nil {
+		return nil, err
+	}
+
+	hashedPass, err := domain.CreateHashedPassword(payload.Password)
+	user.Name = payload.Name
+	user.Email = payload.Email
+	user.Password = hashedPass
+	user.Role = payload.Role
+
+	ok, err := user.IsValid()
+	if !ok {
+		return nil, fmt.Errorf("invalid user inputs while updating: %v", err)
+	}
+
+	err = a.userRepo.Update(user)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func (a *authService) RefreshAccessToken(refreshToken string) (string, error) {
@@ -56,7 +82,7 @@ func (a *authService) GetUser(userID string) (*domain.User, error) {
 	return user, nil
 }
 
-func (a *authService) RegisterUser(payload dto.RegisterUserDTO) error {
+func (a *authService) RegisterUser(payload dto.RegisterUser) error {
 	user, err := domain.NewUser(payload.Name, payload.Email, payload.Password)
 	if err != nil {
 		return fmt.Errorf("failed creating user: %s", err)
@@ -71,7 +97,7 @@ func (a *authService) RegisterUser(payload dto.RegisterUserDTO) error {
 	return nil
 }
 
-func (a *authService) Login(payload dto.LoginRequestDTO) (string, string, error) {
+func (a *authService) Login(payload dto.LoginRequest) (string, string, error) {
 	user, err := a.userRepo.FindByEmail(payload.Email)
 	if err != nil {
 		return "", "", fmt.Errorf("couldn't find user with email: %s", payload.Email)

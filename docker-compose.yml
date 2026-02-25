@@ -31,6 +31,7 @@ services:
       dockerfile: services/user/Dockerfile
     environment:
       ENV: "DEV"
+      ACCESS_TOKEN_SECRET: "secret"
     networks:
       - app-network
     volumes:
@@ -88,6 +89,8 @@ services:
       POSTGRES_DB: user_service
     ports:
       - "5432:5432"
+    volumes:
+      - user-postgres-data:/var/lib/postgresql/data
     networks:
       - app-network
     healthcheck:
@@ -104,6 +107,8 @@ services:
       POSTGRES_DB: product_service
     ports:
       - "5433:5432"
+    volumes:
+      - product-postgres-data:/var/lib/postgresql/data
     networks:
       - app-network
     healthcheck:
@@ -115,3 +120,5 @@ services:
 
 volumes:
   go-cache:
+  user-postgres-data:
+  product-postgres-data:
